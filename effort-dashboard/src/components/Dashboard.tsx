@@ -29,7 +29,14 @@ const Dashboard = () => {
       { mese: "Mar", proposte: 12, manDays: 44.0 },
       { mese: "Apr", proposte: 9, manDays: 51.3 },
       { mese: "Mag", proposte: 13, manDays: 70.5 },
-      { mese: "Giu", proposte: 20, manDays: 80.6 }
+      { mese: "Giu", proposte: 20, manDays: 80.6 },
+      { mese: "Lug", proposte: 0, manDays: 0.0 },
+      { mese: "Ago", proposte: 0, manDays: 0.0 },
+      { mese: "Set", proposte: 0, manDays: 0.0 },
+      { mese: "Ott", proposte: 0, manDays: 0.0 },
+      { mese: "Nov", proposte: 0, manDays: 0.0 },
+      { mese: "Dic", proposte: 1, manDays: 0.0 },
+
     ],
     status: {
       "Wait": 57,
@@ -50,7 +57,9 @@ const Dashboard = () => {
       { cliente: "Nexi", proposte: 3, manDays: 16.5 },
       { cliente: "CRIF", proposte: 3, manDays: 7.4 },
       { cliente: "CSI", proposte: 3, manDays: 8.4 },
-      { cliente: "CONSIP", proposte: 3, manDays: 14.1 }
+      { cliente: "CONSIP", proposte: 3, manDays: 14.1 },
+      { cliente: "BancaIntesa", proposte: 2, manDays: 12.3 },
+      { cliente: "Poste", proposte: 2, manDays: 9.8 }
     ]
   };
 
@@ -156,14 +165,14 @@ const Dashboard = () => {
         mesiMap[m].ore += r.ore;
       });
       
-      const mesiOrdinati = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno'];
+      const mesiOrdinati = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
       const timeline = mesiOrdinati.map(m => ({
         mese: m.substring(0, 3),
         proposte: mesiMap[m]?.proposte || 0,
         manDays: parseFloat(((mesiMap[m]?.ore || 0) / 8).toFixed(1))
       }));
       
-      // Top clienti
+      // Top clienti (in base alle proposte)
       const clientiMap = {};
       records.forEach(r => {
         if (!clientiMap[r.cliente]) clientiMap[r.cliente] = { proposte: 0, ore: 0 };
@@ -178,7 +187,7 @@ const Dashboard = () => {
           manDays: parseFloat((data.ore / 8).toFixed(1))
         }))
         .sort((a, b) => b.proposte - a.proposte)
-        .slice(0, 5);
+        .slice(0, 7);
       
       // Risorse
       const nomiPrincipali = ['Morelli', 'Peli', 'Bignotti', 'Costantino', 'Roveda'];
@@ -342,7 +351,7 @@ const Dashboard = () => {
             📅 Timeline 2025
           </h2>
           <div className="relative">
-            <div className="grid grid-cols-6 gap-4 relative">
+            <div className="grid grid-cols-12 gap-2 relative">
               {dashboardData.timeline.map((month, index) => {
                 const maxProposte = Math.max(...dashboardData.timeline.map(d => d.proposte));
                 const maxManDays = Math.max(...dashboardData.timeline.map(d => d.manDays));
@@ -362,7 +371,7 @@ const Dashboard = () => {
                         style={{ 
                           left: '50%', 
                           transform: 'translateX(-50%)', 
-                          top: `${100 - manDaysHeight}%`,
+                          top: `${100 - proposteHeight}%`,
                           marginTop: '-4px' 
                         }}
                       ></div>
@@ -373,12 +382,16 @@ const Dashboard = () => {
               })}
               
               {dashboardData.timeline.map((month, index) => {
-                if (index === dashboardData.timeline.length - 1) return null;
-                const maxManDays = Math.max(...dashboardData.timeline.map(d => d.manDays));
-                if (maxManDays === 0) return null;
+                if (index >= dashboardData.timeline.length - 1) return null;
                 
-                const currentHeight = (month.manDays / maxManDays) * 100;
-                const nextHeight = (dashboardData.timeline[index + 1].manDays / maxManDays) * 100;
+                const maxProposte = Math.max(...dashboardData.timeline.map(d => d.proposte));
+                if (maxProposte === 0) return null;
+                
+                const currentHeight = (month.proposte / maxProposte) * 100;
+                const nextMonth = dashboardData.timeline[index + 1];
+                const nextHeight = (nextMonth.proposte / maxProposte) * 100;
+                
+                // Calcola le posizioni Y (invertite perché 0% = top, 100% = bottom)
                 const startY = 100 - currentHeight;
                 const endY = 100 - nextHeight;
                 
@@ -387,9 +400,9 @@ const Dashboard = () => {
                     key={`line-${index}`} 
                     className="absolute pointer-events-none" 
                     style={{ 
-                      left: `${((index + 1) * 100 / 6) - (100 / 12)}%`, 
+                      left: `${(index * 100 / 12) + (100 / 24)}%`, 
                       top: '24px', 
-                      width: `${100 / 6}%`, 
+                      width: `${100 / 12}%`, 
                       height: '80px' 
                     }}
                   >
@@ -418,7 +431,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-0.8 bg-red-500" style={{ borderTop: '2px dashed #ef4444' }}></div>
-                  <span>Trend Man/Days</span>
+                  <span>Trend Proposte</span>
                 </div>
               </div>
             </div>
