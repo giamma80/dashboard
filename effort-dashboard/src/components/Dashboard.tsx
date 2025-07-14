@@ -8,6 +8,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [viewMode, setViewMode] = useState('both'); // 'proposte', 'mandays', 'both'
 
   // Dati di default (quelli attuali)
   const defaultData = {
@@ -305,7 +306,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-full mx-auto">
-        {/* Header con upload */}
+        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
             <div className="flex items-center gap-1">
@@ -316,40 +317,49 @@ const Dashboard = () => {
             Effort Proposte
           </h1>
           <p className="text-gray-600 text-sm mb-4">Analisi attività di supporto alle vendite</p>
-          
-          {/* Upload CSV */}
-          <div className="flex items-center justify-center gap-4">
-            <label className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors">
-              <Upload className="w-4 h-4" />
-              <span>Carica CSV Aggiornato</span>
-              <input 
-                type="file" 
-                accept=".csv" 
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isLoading}
-              />
-            </label>
-            {isLoading && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                <span>Elaborazione...</span>
-              </div>
-            )}
-            {lastUpdate && (
-              <div className="text-green-600 text-sm">
-                ✅ Aggiornato: {lastUpdate}
-              </div>
-            )}
-            {error && <div className="text-red-600 text-sm">❌ {error}</div>}
-          </div>
         </div>
 
         {/* Timeline */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            📅 Timeline 2025
-          </h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              📅 Timeline 2025
+            </h2>
+            
+            {/* Controlli visualizzazione */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('proposte')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'proposte' 
+                    ? 'bg-blue-500 text-white shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Proposte
+              </button>
+              <button
+                onClick={() => setViewMode('mandays')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'mandays' 
+                    ? 'bg-orange-500 text-white shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Man/Days
+              </button>
+              <button
+                onClick={() => setViewMode('both')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'both' 
+                    ? 'bg-green-500 text-white shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Entrambe
+              </button>
+            </div>
+          </div>
           <div className="relative">
             <div className="grid grid-cols-12 gap-2 relative">
               {dashboardData.timeline.map((month, index) => {
@@ -361,27 +371,64 @@ const Dashboard = () => {
                 return (
                   <div key={index} className="text-center relative">
                     <div className="text-sm font-medium text-gray-600 mb-2">{month.mese}</div>
-                    <div className="h-20 w-8 bg-gray-200 rounded-full mx-auto flex items-end overflow-hidden relative">
-                      <div 
-                        className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-full transition-all duration-500" 
-                        style={{ height: `${proposteHeight}%` }}
-                      ></div>
-                      <div 
-                        className="absolute w-2 h-2 bg-red-600 rounded-full border border-white" 
-                        style={{ 
-                          left: '50%', 
-                          transform: 'translateX(-50%)', 
-                          top: `${100 - proposteHeight}%`,
-                          marginTop: '-4px' 
-                        }}
-                      ></div>
+                    <div className="flex justify-center gap-1 mb-2">
+                      {/* Barra Proposte */}
+                      {(viewMode === 'proposte' || viewMode === 'both') && (
+                        <div className={`h-24 bg-gray-200 rounded-full flex items-end overflow-hidden relative ${
+                          viewMode === 'both' ? 'w-6' : 'w-8'
+                        }`}>
+                          <div 
+                            className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-full transition-all duration-500" 
+                            style={{ height: `${proposteHeight}%` }}
+                          ></div>
+                          <div 
+                            className="absolute w-2 h-2 bg-red-600 rounded-full border border-white" 
+                            style={{ 
+                              left: '50%', 
+                              transform: 'translateX(-50%)', 
+                              top: `${100 - proposteHeight}%`,
+                              marginTop: '-4px' 
+                            }}
+                          ></div>
+                        </div>
+                      )}
+                      
+                      {/* Barra Man/Days */}
+                      {(viewMode === 'mandays' || viewMode === 'both') && (
+                        <div className={`h-24 bg-gray-200 rounded-full flex items-end overflow-hidden relative ${
+                          viewMode === 'both' ? 'w-6' : 'w-8'
+                        }`}>
+                          <div 
+                            className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-full transition-all duration-500" 
+                            style={{ height: `${manDaysHeight}%` }}
+                          ></div>
+                          <div 
+                            className="absolute w-2 h-2 bg-orange-800 rounded-full border border-white" 
+                            style={{ 
+                              left: '50%', 
+                              transform: 'translateX(-50%)', 
+                              top: `${100 - manDaysHeight}%`,
+                              marginTop: '-4px' 
+                            }}
+                          ></div>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-sm font-bold text-gray-700 mt-1">{month.proposte}</div>
+                    
+                    <div className="text-xs text-gray-700 space-y-1">
+                      {(viewMode === 'proposte' || viewMode === 'both') && (
+                        <div className="font-bold text-blue-600">{month.proposte}</div>
+                      )}
+                      {(viewMode === 'mandays' || viewMode === 'both') && (
+                        <div className="font-bold text-orange-600">{month.manDays}</div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
               
-              {dashboardData.timeline.map((month, index) => {
+              {/* Linea di tendenza Proposte */}
+              {(viewMode === 'proposte' || viewMode === 'both') && dashboardData.timeline.map((month, index) => {
                 if (index >= dashboardData.timeline.length - 1) return null;
                 
                 const maxProposte = Math.max(...dashboardData.timeline.map(d => d.proposte));
@@ -395,15 +442,20 @@ const Dashboard = () => {
                 const startY = 100 - currentHeight;
                 const endY = 100 - nextHeight;
                 
+                // Calcola offset basato sulla modalità di visualizzazione
+                const leftOffset = viewMode === 'both' 
+                  ? `${(index * 100 / 12) + (100 / 24)}%`  // Offset per prima barra quando entrambe visibili
+                  : `${(index * 100 / 12) + (100 / 24)}%`; // Centrato quando solo proposte (stesso offset perché la barra è già centrata)
+                
                 return (
                   <div 
-                    key={`line-${index}`} 
+                    key={`line-proposte-${index}`} 
                     className="absolute pointer-events-none" 
                     style={{ 
-                      left: `${(index * 100 / 12) + (100 / 24)}%`, 
+                      left: leftOffset, 
                       top: '24px', 
                       width: `${100 / 12}%`, 
-                      height: '80px' 
+                      height: '96px' 
                     }}
                   >
                     <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -412,9 +464,56 @@ const Dashboard = () => {
                         y1={`${startY}%`} 
                         x2="100" 
                         y2={`${endY}%`} 
-                        stroke="#ef4444" 
+                        stroke="#2563eb" 
                         strokeWidth="2" 
                         strokeDasharray="4,4" 
+                        opacity="0.8" 
+                      />
+                    </svg>
+                  </div>
+                );
+              })}
+              
+              {/* Linea di tendenza Man/Days */}
+              {(viewMode === 'mandays' || viewMode === 'both') && dashboardData.timeline.map((month, index) => {
+                if (index >= dashboardData.timeline.length - 1) return null;
+                
+                const maxManDays = Math.max(...dashboardData.timeline.map(d => d.manDays));
+                if (maxManDays === 0) return null;
+                
+                const currentHeight = (month.manDays / maxManDays) * 100;
+                const nextMonth = dashboardData.timeline[index + 1];
+                const nextHeight = (nextMonth.manDays / maxManDays) * 100;
+                
+                // Calcola le posizioni Y (invertite perché 0% = top, 100% = bottom)
+                const startY = 100 - currentHeight;
+                const endY = 100 - nextHeight;
+                
+                // Calcola offset basato sulla modalità di visualizzazione
+                const leftOffset = viewMode === 'both' 
+                  ? `${(index * 100 / 12) + (100 / 24) + (100 / 24 / 2)}%` // Offset per seconda barra quando entrambe visibili
+                  : `${(index * 100 / 12) + (100 / 24)}%`; // Centrato quando solo man/days
+                
+                return (
+                  <div 
+                    key={`line-mandays-${index}`} 
+                    className="absolute pointer-events-none" 
+                    style={{ 
+                      left: leftOffset,
+                      top: '24px', 
+                      width: `${100 / 12}%`, 
+                      height: '96px' 
+                    }}
+                  >
+                    <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      <line 
+                        x1="0" 
+                        y1={`${startY}%`} 
+                        x2="100" 
+                        y2={`${endY}%`} 
+                        stroke="#ea580c" 
+                        strokeWidth="2" 
+                        strokeDasharray="6,3" 
                         opacity="0.8" 
                       />
                     </svg>
@@ -425,21 +524,37 @@ const Dashboard = () => {
             
             <div className="flex justify-center mt-2 text-xs text-gray-600">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span>Proposte mensili</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-0.8 bg-red-500" style={{ borderTop: '2px dashed #ef4444' }}></div>
-                  <span>Trend Proposte</span>
-                </div>
+                {(viewMode === 'proposte' || viewMode === 'both') && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                      <span>Proposte mensili</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-0.8 bg-blue-600" style={{ borderTop: '2px dashed #2563eb' }}></div>
+                      <span>Trend Proposte</span>
+                    </div>
+                  </>
+                )}
+                {(viewMode === 'mandays' || viewMode === 'both') && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                      <span>Man/Days mensili</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-0.8 bg-orange-600" style={{ borderTop: '2px dashed #ea580c' }}></div>
+                      <span>Trend Man/Days</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Cards metriche principali sotto la timeline */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-4 gap-6 mb-8">
           <div className="col-span-2 grid grid-cols-3 gap-4">
             <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
               <div className="text-center">
@@ -478,9 +593,9 @@ const Dashboard = () => {
         </div>
 
         {/* Layout principale ORIZZONTALE - 2 colonne sotto Man/Days, 2 colonne a sinistra */}
-        <div className="grid grid-cols-4 gap-6 h-[calc(100vh-900px)]">
+        <div className="grid grid-cols-4 gap-6 mb-8">
           {/* Colonna 1 - Grafico a torta CSS */}
-          <div className="col-span-1 h-full">
+          <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuzione Proposte</h3>
               <div className="flex-1 flex justify-center">
@@ -550,7 +665,7 @@ const Dashboard = () => {
           </div>
 
           {/* Colonna 2 - Top Clienti */}
-          <div className="col-span-1 h-full">
+          <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Clienti</h3>
               <div className="space-y-3 flex-1">
@@ -575,8 +690,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Colonna 3 - Allocazione per Risorsa (sotto Man/Days) */}
-          <div className="col-span-1 h-full">
+          {/* Colonna 3 - Allocazione per Risorsa */}
+          <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Allocazione per Risorsa</h3>
               <div className="space-y-3 flex-1">
@@ -603,8 +718,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Colonna 4 - Allocazione Media Mensile e Trend Generale (sotto Man/Days) */}
-          <div className="col-span-1 h-full">
+          {/* Colonna 4 - Allocazione Media Mensile e Trend Generale */}
+          <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistica Mensile</h3>
               <div className="mb-4 p-4 bg-blue-50 rounded-lg">
@@ -638,6 +753,43 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Sezione Upload CSV - Riga dedicata in basso */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Aggiorna Dati Dashboard</h3>
+          <div className="flex items-center justify-center gap-4">
+            <label className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
+              <Upload className="w-5 h-5" />
+              <span className="font-medium">Carica CSV Aggiornato</span>
+              <input 
+                type="file" 
+                accept=".csv" 
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isLoading}
+              />
+            </label>
+            {isLoading && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span className="font-medium">Elaborazione in corso...</span>
+              </div>
+            )}
+            {lastUpdate && (
+              <div className="text-green-600 text-sm font-medium">
+                ✅ Ultimo aggiornamento: {lastUpdate}
+              </div>
+            )}
+            {error && (
+              <div className="text-red-600 text-sm font-medium">
+                ❌ Errore: {error}
+              </div>
+            )}
+          </div>
+          <p className="text-center text-gray-500 text-sm mt-3">
+            Carica un file CSV per aggiornare tutti i dati della dashboard
+          </p>
         </div>
       </div>
     </div>
