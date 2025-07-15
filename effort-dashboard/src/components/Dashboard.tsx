@@ -2,12 +2,59 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Clock, Target, Calendar, Building2, Upload, FileText } from 'lucide-react';
 
+// Tipi per TypeScript
+interface DashboardData {
+  totali: {
+    proposte: number;
+    ore: number;
+    manDays: number;
+    clienti: number;
+    persone: number;
+    proposteConcluse: number;
+    proposteVinte: number;
+    propostePerse: number;
+    tassoSuccesso: number;
+    percentualeVinte: number;
+  };
+  timeline: Array<{
+    mese: string;
+    proposte: number;
+    manDays: number;
+  }>;
+  status: {
+    Wait: number;
+    Vinte: number;
+    Perse: number;
+    Altro: number;
+  };
+  risorse: Array<{
+    nome: string;
+    progetti: number;
+    manDays: number;
+    allocazioneMedia: number;
+  }>;
+  topClienti: Array<{
+    cliente: string;
+    proposte: number;
+    manDays: number;
+  }>;
+}
+
+interface CSVRecord {
+  cliente: string;
+  gara: string;
+  persone: string;
+  ore: number;
+  status: string;
+  mese: string;
+}
+
 const Dashboard = () => {
   // State per i dati della dashboard
-  const [dashboardData, setDashboardData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState('both'); // 'proposte', 'mandays', 'both'
   const [clientiSortMode, setClientiSortMode] = useState('proposte'); // 'proposte', 'mandays'
   const [risorseSortMode, setRisorseSortMode] = useState('mandays'); // 'mandays', 'progetti'
@@ -80,7 +127,7 @@ const Dashboard = () => {
   }, []);
 
   // Funzione semplificata per processare il CSV
-  const processCSV = (csvText) => {
+  const processCSV = (csvText: string): DashboardData => {
     try {
       console.log("=== INIZIO ELABORAZIONE CSV ===");
       
@@ -90,7 +137,7 @@ const Dashboard = () => {
       console.log("Totale righe nel file:", allLines.length);
       
       // Trova la prima riga che sembra contenere dati (non header)
-      let dataLines = [];
+      let dataLines: string[] = [];
       let foundData = false;
       
       for (let i = 0; i < allLines.length; i++) {
@@ -117,10 +164,10 @@ const Dashboard = () => {
       }
       
       // Processa ogni riga di dati
-      const records = [];
+      const records: CSVRecord[] = [];
       
       dataLines.forEach((line, index) => {
-        const parts = line.split(';').map(p => p.replace(/"/g, '').trim());
+        const parts = line.split(';').map((p: string) => p.replace(/"/g, '').trim());
         
         if (parts.length >= 6) {
           const mese = parts[5];
@@ -168,7 +215,7 @@ const Dashboard = () => {
       const percentualeVinte = parseFloat(((statusCount.Vinte / records.length) * 100).toFixed(1));
       
       // Timeline
-      const mesiMap = {};
+      const mesiMap: Record<string, { proposte: number; ore: number }> = {};
       records.forEach(r => {
         const m = r.mese;
         if (!mesiMap[m]) mesiMap[m] = { proposte: 0, ore: 0 };
@@ -184,7 +231,7 @@ const Dashboard = () => {
       }));
       
       // Top clienti (in base alle proposte)
-      const clientiMap = {};
+      const clientiMap: Record<string, { proposte: number; ore: number }> = {};
       records.forEach(r => {
         if (!clientiMap[r.cliente]) clientiMap[r.cliente] = { proposte: 0, ore: 0 };
         clientiMap[r.cliente].proposte++;
@@ -202,14 +249,14 @@ const Dashboard = () => {
       
       // Risorse
       const nomiPrincipali = ['Morelli', 'Peli', 'Bignotti', 'Costantino', 'Roveda'];
-      const risorseMap = {};
+      const risorseMap: Record<string, { progetti: number; ore: number }> = {};
       nomiPrincipali.forEach(n => risorseMap[n] = { progetti: 0, ore: 0 });
       risorseMap['Altre risorse'] = { progetti: 0, ore: 0 };
       
       records.forEach(r => {
         if (r.persone) {
-          const nomi = r.persone.split(',').map(n => n.trim());
-          nomi.forEach(nome => {
+          const nomi = r.persone.split(',').map((n: string) => n.trim());
+          nomi.forEach((nome: string) => {
             if (nomiPrincipali.includes(nome)) {
               risorseMap[nome].progetti++;
               risorseMap[nome].ore += r.ore / nomi.length;
@@ -266,13 +313,13 @@ const Dashboard = () => {
       
     } catch (err) {
       console.error("ERRORE:", err);
-      throw new Error(`Errore elaborazione: ${err.message}`);
+      throw new Error(`Errore elaborazione: ${(err as Error).message}`);
     }
   };
 
   // Handler per il caricamento del file
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setIsLoading(true);
@@ -294,7 +341,7 @@ const Dashboard = () => {
       
     } catch (err) {
       console.error("Errore caricamento:", err);
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
