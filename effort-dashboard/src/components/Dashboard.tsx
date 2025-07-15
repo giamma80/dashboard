@@ -59,66 +59,42 @@ const Dashboard = () => {
   const [clientiSortMode, setClientiSortMode] = useState('proposte'); // 'proposte', 'mandays'
   const [risorseSortMode, setRisorseSortMode] = useState('mandays'); // 'mandays', 'progetti'
 
-  // Dati di default (quelli attuali)
-  const defaultData = {
+  // Dati di default vuoti (in attesa di caricamento CSV)
+  const defaultData: DashboardData = {
     totali: {
-      proposte: 75,
-      ore: 3717,
-      manDays: 464.6,
-      clienti: 54,
-      persone: 23,
-      proposteConcluse: 15,
-      proposteVinte: 8,
-      propostePerse: 7,
-      tassoSuccesso: 53.3,
-      percentualeVinte: 10.7
+      proposte: 0,
+      ore: 0,
+      manDays: 0,
+      clienti: 0,
+      persone: 0,
+      proposteConcluse: 0,
+      proposteVinte: 0,
+      propostePerse: 0,
+      tassoSuccesso: 0,
+      percentualeVinte: 0
     },
     timeline: [
-      { mese: "Gen", proposte: 13, manDays: 185.1 },
-      { mese: "Feb", proposte: 7, manDays: 24.1 },
-      { mese: "Mar", proposte: 12, manDays: 44.0 },
-      { mese: "Apr", proposte: 9, manDays: 51.3 },
-      { mese: "Mag", proposte: 13, manDays: 70.5 },
-      { mese: "Giu", proposte: 20, manDays: 80.6 },
-      { mese: "Lug", proposte: 0, manDays: 0.0 },
-      { mese: "Ago", proposte: 0, manDays: 0.0 },
-      { mese: "Set", proposte: 0, manDays: 0.0 },
-      { mese: "Ott", proposte: 0, manDays: 0.0 },
-      { mese: "Nov", proposte: 0, manDays: 0.0 },
-      { mese: "Dic", proposte: 1, manDays: 0.0 },
-
+      { mese: "Gen", proposte: 0, manDays: 0 },
+      { mese: "Feb", proposte: 0, manDays: 0 },
+      { mese: "Mar", proposte: 0, manDays: 0 },
+      { mese: "Apr", proposte: 0, manDays: 0 },
+      { mese: "Mag", proposte: 0, manDays: 0 },
+      { mese: "Giu", proposte: 0, manDays: 0 },
+      { mese: "Lug", proposte: 0, manDays: 0 },
+      { mese: "Ago", proposte: 0, manDays: 0 },
+      { mese: "Set", proposte: 0, manDays: 0 },
+      { mese: "Ott", proposte: 0, manDays: 0 },
+      { mese: "Nov", proposte: 0, manDays: 0 },
+      { mese: "Dic", proposte: 0, manDays: 0 }
     ],
     status: {
-      "Wait": 57,
-      "Vinte": 8,
-      "Perse": 7,
-      "Altro": 3
+      "Wait": 0,
+      "Vinte": 0,
+      "Perse": 0,
+      "Altro": 0
     },
-    risorse: [
-      { nome: "Bignotti", progetti: 17, manDays: 53.1, allocazioneMedia: 8.9 },
-      { nome: "Costantino", progetti: 23, manDays: 52.8, allocazioneMedia: 8.8 },
-      { nome: "Morelli", progetti: 21, manDays: 46.6, allocazioneMedia: 7.8 },
-      { nome: "Roveda", progetti: 18, manDays: 43.6, allocazioneMedia: 7.3 },
-      { nome: "Peli", progetti: 20, manDays: 21.3, allocazioneMedia: 3.6 },
-      { nome: "Altre risorse", progetti: 33, manDays: 247.2, allocazioneMedia: 41.2 }
-    ],
-    topClienti: [
-      { cliente: "IntesaSanPaolo", proposte: 4, manDays: 130.0 },
-      { cliente: "Nexi", proposte: 3, manDays: 16.5 },
-      { cliente: "CRIF", proposte: 3, manDays: 7.4 },
-      { cliente: "CSI", proposte: 3, manDays: 8.4 },
-      { cliente: "CONSIP", proposte: 3, manDays: 14.1 },
-      { cliente: "BancaIntesa", proposte: 2, manDays: 12.3 },
-      { cliente: "Poste", proposte: 2, manDays: 9.8 },
-      { cliente: "UniCredit", proposte: 2, manDays: 25.5 },
-      { cliente: "Mediobanca", proposte: 1, manDays: 18.2 },
-      { cliente: "BPER", proposte: 1, manDays: 15.8 },
-      { cliente: "CredemBanca", proposte: 1, manDays: 12.1 },
-      { cliente: "BancaPopolare", proposte: 1, manDays: 8.9 },
-      { cliente: "MPS", proposte: 1, manDays: 22.3 },
-      { cliente: "BNL", proposte: 1, manDays: 6.5 },
-      { cliente: "ING", proposte: 1, manDays: 4.2 }
-    ]
+    risorse: [],
+    topClienti: []
   };
 
   // Inizializza con dati di default
@@ -347,8 +323,85 @@ const Dashboard = () => {
     }
   };
 
+  // Verifica se i dati sono vuoti (non è stato caricato nessun CSV)
+  const isDataEmpty = dashboardData && 
+    dashboardData.totali.proposte === 0 && 
+    dashboardData.risorse.length === 0 && 
+    dashboardData.topClienti.length === 0;
+
+  // Guard clause per null check
   if (!dashboardData) {
     return <div className="flex items-center justify-center min-h-screen">Caricamento...</div>;
+  }
+
+  // Messaggio quando non ci sono dati
+  if (isDataEmpty) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-full mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+              </div>
+              Effort Proposte
+            </h1>
+            <p className="text-gray-600 text-sm mb-4">Analisi attività di supporto alle vendite</p>
+          </div>
+
+          {/* Messaggio di benvenuto */}
+          <div className="bg-white rounded-lg shadow-md p-8 text-center mb-8">
+            <div className="text-6xl mb-4">📊</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Benvenuto nella Dashboard</h2>
+            <p className="text-gray-600 mb-6">
+              La dashboard è pronta per visualizzare i tuoi dati.<br />
+              Carica un file CSV per iniziare l'analisi delle proposte.
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-blue-900 mb-2">📋 Formato CSV Richiesto:</h3>
+              <p className="text-sm text-blue-700">
+                <code>Cliente; Gara; Persone; Ore; Status; Mese</code>
+              </p>
+            </div>
+          </div>
+
+          {/* Sezione Upload CSV */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Carica i Tuoi Dati</h3>
+            <div className="flex items-center justify-center gap-4">
+              <label className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
+                <Upload className="w-5 h-5" />
+                <span className="font-medium">Carica CSV</span>
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+              </label>
+              {isLoading && (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span className="font-medium">Elaborazione in corso...</span>
+                </div>
+              )}
+              {error && (
+                <div className="text-red-600 text-sm font-medium">
+                  ❌ Errore: {error}
+                </div>
+              )}
+            </div>
+            <p className="text-center text-gray-500 text-sm mt-3">
+              Seleziona un file CSV per popolare automaticamente tutti i grafici e le statistiche
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Preparazione dati per i grafici
@@ -388,6 +441,97 @@ const Dashboard = () => {
 
   const sortedTopClienti = getTopClienti();
   const sortedRisorse = getSortedRisorse();
+
+  // Funzione per generare commenti dinamici del trend
+  const generateTrendComments = () => {
+    if (!dashboardData?.timeline || dashboardData.timeline.length === 0) {
+      return [
+        { text: "Nessun dato disponibile", type: "neutral" },
+        { text: "Carica un CSV per vedere i trend", type: "neutral" }
+      ];
+    }
+
+    const timeline = dashboardData.timeline;
+    const comments = [];
+
+    // Trova il mese con più proposte
+    const maxProposteMese = timeline.reduce((max, current) => 
+      current.proposte > max.proposte ? current : max
+    );
+    
+    // Trova il mese con più man/days
+    const maxManDaysMese = timeline.reduce((max, current) => 
+      current.manDays > max.manDays ? current : max
+    );
+
+    // Calcola la tendenza generale (confronto primo vs ultimo trimestre con dati)
+    const mesiConDati = timeline.filter(m => m.proposte > 0 || m.manDays > 0);
+    
+    if (mesiConDati.length >= 2) {
+      const primoTrimestre = mesiConDati.slice(0, Math.ceil(mesiConDati.length / 2));
+      const ultimoTrimestre = mesiConDati.slice(Math.floor(mesiConDati.length / 2));
+      
+      const mediaPrimoTrimestre = primoTrimestre.reduce((sum, m) => sum + m.proposte, 0) / primoTrimestre.length;
+      const mediaUltimoTrimestre = ultimoTrimestre.reduce((sum, m) => sum + m.proposte, 0) / ultimoTrimestre.length;
+      
+      // Commento sul picco
+      if (maxProposteMese.proposte > 0) {
+        comments.push({
+          text: `${maxProposteMese.mese}: picco massimo (${maxProposteMese.proposte} proposte)`,
+          type: "success"
+        });
+      }
+
+      // Commento sulla tendenza
+      if (mediaUltimoTrimestre > mediaPrimoTrimestre * 1.1) {
+        comments.push({
+          text: "Trend crescente nel periodo finale",
+          type: "success"
+        });
+      } else if (mediaUltimoTrimestre < mediaPrimoTrimestre * 0.9) {
+        comments.push({
+          text: "Rallentamento nel periodo finale",
+          type: "warning"
+        });
+      } else {
+        comments.push({
+          text: "Attività stabile nel periodo",
+          type: "neutral"
+        });
+      }
+
+      // Commento sui man/days
+      if (maxManDaysMese.manDays > 0 && maxManDaysMese.mese !== maxProposteMese.mese) {
+        comments.push({
+          text: `${maxManDaysMese.mese}: massimo effort (${maxManDaysMese.manDays} m/d)`,
+          type: "info"
+        });
+      }
+
+      // Analisi distribuzione
+      const mesiAttivi = timeline.filter(m => m.proposte > 0).length;
+      if (mesiAttivi <= 2) {
+        comments.push({
+          text: "Attività concentrata in pochi mesi",
+          type: "warning"
+        });
+      } else if (mesiAttivi >= 5) {
+        comments.push({
+          text: "Attività distribuita costantemente",
+          type: "success"
+        });
+      }
+    } else {
+      comments.push({
+        text: "Dati insufficienti per l'analisi trend",
+        type: "neutral"
+      });
+    }
+
+    return comments.slice(0, 3); // Massimo 3 commenti
+  };
+
+  const trendComments = generateTrendComments();
 
   const COLORS = ['#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F59E0B'];
 
@@ -894,19 +1038,23 @@ const Dashboard = () => {
               
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-semibold text-gray-900 mb-3">Trend Generale</h4>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600">•</span>
-                    <span><strong>Gen:</strong> picco massimo</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600">•</span>
-                    <span><strong>Feb-Mar:</strong> consolidamento</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-600">•</span>
-                    <span><strong>Apr-Giu:</strong> crescita graduale</span>
-                  </li>
+                <ul className="text-sm space-y-2">
+                  {trendComments.map((comment, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className={`
+                        ${comment.type === 'success' ? 'text-green-600' : ''}
+                        ${comment.type === 'warning' ? 'text-orange-600' : ''}
+                        ${comment.type === 'info' ? 'text-blue-600' : ''}
+                        ${comment.type === 'neutral' ? 'text-gray-600' : ''}
+                      `}>•</span>
+                      <span className={`
+                        ${comment.type === 'success' ? 'text-green-700' : ''}
+                        ${comment.type === 'warning' ? 'text-orange-700' : ''}
+                        ${comment.type === 'info' ? 'text-blue-700' : ''}
+                        ${comment.type === 'neutral' ? 'text-gray-600' : ''}
+                      `}>{comment.text}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
