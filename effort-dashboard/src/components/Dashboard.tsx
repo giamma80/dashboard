@@ -9,6 +9,8 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [viewMode, setViewMode] = useState('both'); // 'proposte', 'mandays', 'both'
+  const [clientiSortMode, setClientiSortMode] = useState('proposte'); // 'proposte', 'mandays'
+  const [risorseSortMode, setRisorseSortMode] = useState('mandays'); // 'mandays', 'progetti'
 
   // Dati di default (quelli attuali)
   const defaultData = {
@@ -60,7 +62,15 @@ const Dashboard = () => {
       { cliente: "CSI", proposte: 3, manDays: 8.4 },
       { cliente: "CONSIP", proposte: 3, manDays: 14.1 },
       { cliente: "BancaIntesa", proposte: 2, manDays: 12.3 },
-      { cliente: "Poste", proposte: 2, manDays: 9.8 }
+      { cliente: "Poste", proposte: 2, manDays: 9.8 },
+      { cliente: "UniCredit", proposte: 2, manDays: 25.5 },
+      { cliente: "Mediobanca", proposte: 1, manDays: 18.2 },
+      { cliente: "BPER", proposte: 1, manDays: 15.8 },
+      { cliente: "CredemBanca", proposte: 1, manDays: 12.1 },
+      { cliente: "BancaPopolare", proposte: 1, manDays: 8.9 },
+      { cliente: "MPS", proposte: 1, manDays: 22.3 },
+      { cliente: "BNL", proposte: 1, manDays: 6.5 },
+      { cliente: "ING", proposte: 1, manDays: 4.2 }
     ]
   };
 
@@ -300,6 +310,37 @@ const Dashboard = () => {
     value: count,
     percentage: ((count / dashboardData.totali.proposte) * 100).toFixed(1)
   }));
+
+  // Genera dinamicamente i top clienti in base alla modalità selezionata
+  const getTopClienti = () => {
+    // Se abbiamo dati elaborati dal CSV, ricrea la lista clienti dai dati grezzi
+    // Altrimenti usa la lista di default
+    const allClienti = dashboardData.topClienti || [];
+    
+    if (clientiSortMode === 'proposte') {
+      return [...allClienti]
+        .sort((a, b) => b.proposte - a.proposte)
+        .slice(0, 7);
+    } else {
+      return [...allClienti]
+        .sort((a, b) => b.manDays - a.manDays)
+        .slice(0, 7);
+    }
+  };
+
+  // Genera dinamicamente l'ordinamento delle risorse in base alla modalità selezionata
+  const getSortedRisorse = () => {
+    const allRisorse = dashboardData.risorse || [];
+    
+    if (risorseSortMode === 'mandays') {
+      return [...allRisorse].sort((a, b) => b.manDays - a.manDays);
+    } else {
+      return [...allRisorse].sort((a, b) => b.progetti - a.progetti);
+    }
+  };
+
+  const sortedTopClienti = getTopClienti();
+  const sortedRisorse = getSortedRisorse();
 
   const COLORS = ['#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F59E0B'];
 
@@ -667,9 +708,35 @@ const Dashboard = () => {
           {/* Colonna 2 - Top Clienti */}
           <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Clienti</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Top Clienti</h3>
+                
+                {/* Controllo ordinamento clienti */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setClientiSortMode('proposte')}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      clientiSortMode === 'proposte' 
+                        ? 'bg-blue-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Proposte
+                  </button>
+                  <button
+                    onClick={() => setClientiSortMode('mandays')}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      clientiSortMode === 'mandays' 
+                        ? 'bg-orange-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Man/Days
+                  </button>
+                </div>
+              </div>
               <div className="space-y-3 flex-1">
-                {dashboardData.topClienti.map((cliente, index) => (
+                {sortedTopClienti.map((cliente, index) => (
                   <div key={cliente.cliente} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
@@ -677,12 +744,21 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{cliente.cliente}</div>
-                        <div className="text-sm text-gray-500">{cliente.proposte} proposte</div>
+                        <div className="text-sm text-gray-500">
+                          {clientiSortMode === 'proposte' 
+                            ? `${cliente.proposte} proposte` 
+                            : `${cliente.manDays} man/days`
+                          }
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-blue-600">{cliente.manDays}</div>
-                      <div className="text-sm text-gray-500">man/days</div>
+                      <div className={`font-semibold ${clientiSortMode === 'proposte' ? 'text-blue-600' : 'text-orange-600'}`}>
+                        {clientiSortMode === 'proposte' ? cliente.proposte : cliente.manDays}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {clientiSortMode === 'proposte' ? 'proposte' : 'man/days'}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -693,9 +769,35 @@ const Dashboard = () => {
           {/* Colonna 3 - Allocazione per Risorsa */}
           <div className="col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Allocazione per Risorsa</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Allocazione per Risorsa</h3>
+                
+                {/* Controllo ordinamento risorse */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setRisorseSortMode('mandays')}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      risorseSortMode === 'mandays' 
+                        ? 'bg-green-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Man/Days
+                  </button>
+                  <button
+                    onClick={() => setRisorseSortMode('progetti')}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      risorseSortMode === 'progetti' 
+                        ? 'bg-purple-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Progetti
+                  </button>
+                </div>
+              </div>
               <div className="space-y-3 flex-1">
-                {dashboardData.risorse.map((risorsa, index) => (
+                {sortedRisorse.map((risorsa, index) => (
                   <div key={risorsa.nome} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3 ${
@@ -705,12 +807,21 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{risorsa.nome}</div>
-                        <div className="text-sm text-gray-500">{risorsa.progetti} progetti</div>
+                        <div className="text-sm text-gray-500">
+                          {risorseSortMode === 'mandays' 
+                            ? `${risorsa.progetti} progetti` 
+                            : `${risorsa.manDays.toFixed(1)} man/days`
+                          }
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-green-600">{risorsa.manDays.toFixed(1)}</div>
-                      <div className="text-sm text-gray-500">man/days</div>
+                      <div className={`font-semibold ${risorseSortMode === 'mandays' ? 'text-green-600' : 'text-purple-600'}`}>
+                        {risorseSortMode === 'mandays' ? risorsa.manDays.toFixed(1) : risorsa.progetti}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {risorseSortMode === 'mandays' ? 'man/days' : 'progetti'}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -725,7 +836,7 @@ const Dashboard = () => {
               <div className="mb-4 p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-3">Allocazione Media Mensile</h4>
                 <div className="space-y-2">
-                  {dashboardData.risorse.map((risorsa) => (
+                  {sortedRisorse.map((risorsa) => (
                     <div key={risorsa.nome} className="flex justify-between items-center">
                       <span className="text-sm text-blue-700">{risorsa.nome}</span>
                       <span className="text-sm font-medium text-blue-900">{risorsa.allocazioneMedia} m/d</span>
