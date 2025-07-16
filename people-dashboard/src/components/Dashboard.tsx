@@ -169,9 +169,26 @@ const Dashboard = () => {
     ]
   };
 
-  // Inizializza con dati vuoti
+  // Inizializza con dati vuoti e carica dati salvati
   useEffect(() => {
-    setDashboardData(emptyData);
+    // Prova a caricare dati salvati dal localStorage
+    const savedData = localStorage.getItem('people-dashboard-data');
+    const savedCsv = localStorage.getItem('people-dashboard-csv');
+    const savedLastUpdate = localStorage.getItem('people-dashboard-lastUpdate');
+    
+    if (savedData && savedCsv) {
+      try {
+        setDashboardData(JSON.parse(savedData));
+        setCsvData(savedCsv);
+        setLastUpdate(savedLastUpdate);
+        console.log('Dati caricati dal localStorage');
+      } catch (error) {
+        console.error('Errore nel caricamento dati salvati:', error);
+        setDashboardData(emptyData);
+      }
+    } else {
+      setDashboardData(emptyData);
+    }
   }, []);
   
   // Re-processa i dati quando cambia il filtro priorità
@@ -365,6 +382,11 @@ const Dashboard = () => {
       setDashboardData(newData);
       setLastUpdate(new Date().toLocaleTimeString());
       
+      // Salva i dati nel localStorage per la funzionalità offline
+      localStorage.setItem('people-dashboard-csv', text);
+      localStorage.setItem('people-dashboard-data', JSON.stringify(newData));
+      localStorage.setItem('people-dashboard-lastUpdate', new Date().toLocaleTimeString());
+      
       // Reset del file input
       event.target.value = '';
       
@@ -401,14 +423,18 @@ const Dashboard = () => {
       <div className="max-w-full mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <div className="w-4 h-4 bg-purple-500 rounded"></div>
-            </div>
-            People Dashboard
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div></div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <div className="w-4 h-4 bg-purple-500 rounded"></div>
+              </div>
+              People Dashboard
+            </h1>
+            <div></div>
+          </div>
           <p className="text-gray-600 text-sm mb-4">Gestione progetti e allocazione risorse</p>
         </div>
 
