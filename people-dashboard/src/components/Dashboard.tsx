@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, Clock, Building2, Upload, AlertCircle, CheckCircle, XCircle, Pause, ChevronUp, ChevronDown } from 'lucide-react';
+import { Users, Clock, Building2, Upload, AlertCircle, CheckCircle, XCircle, Pause, ChevronUp, ChevronDown, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import DownloadSection from './DownloadSection';
 
 // Tipi per i dati
 interface ProjectData {
@@ -65,6 +66,9 @@ const Dashboard = () => {
   
   // State per il filtro priorità (drill-down)
   const [selectedPriorita, setSelectedPriorita] = useState<string | null>(null);
+  
+  // State per il modale download
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Funzione per gestire l'ordinamento
   const handleSort = (key: keyof DashboardData['persone'][0]) => {
@@ -433,7 +437,15 @@ const Dashboard = () => {
               </div>
               People Dashboard
             </h1>
-            <div></div>
+            <div>
+              <button
+                onClick={() => setShowDownloadModal(true)}
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md"
+              >
+                <Download className="w-4 h-4" />
+                Scarica App
+              </button>
+            </div>
           </div>
           <p className="text-gray-600 text-sm mb-4">Gestione progetti e allocazione risorse</p>
         </div>
@@ -751,6 +763,12 @@ const Dashboard = () => {
           </p>
         </div>
       </div>
+
+      {/* Sezione Download */}
+      <DownloadSection 
+        isOpen={showDownloadModal} 
+        onClose={() => setShowDownloadModal(false)} 
+      />
     </div>
   );
 };
