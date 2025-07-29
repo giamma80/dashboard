@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Upload, Download, Calendar, User, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart } from 'recharts';
 import DownloadSection from './DownloadSection';
 
 // Tipi per i nuovi dati
@@ -52,7 +52,8 @@ interface DashboardData {
   statusDistribution: { [status: string]: number };
   priorityDistribution: { [priority: string]: number };
   typeDistribution: { [type: string]: number };
-  streamDistribution: StreamData[];
+  streamDistribution: StreamData[]; // Per le statistiche: tutti gli stream reali
+  streamDistributionForCharts: StreamData[]; // Per i grafici: con aggregazione "Altri"
   topProjects: { name: string; hours: number; stream: string; member: string; color: string }[];
 }
 
@@ -144,6 +145,7 @@ const Dashboard = () => {
     priorityDistribution: {},
     typeDistribution: {},
     streamDistribution: [],
+    streamDistributionForCharts: [],
     topProjects: []
   };
 
@@ -479,37 +481,39 @@ const Dashboard = () => {
       streamData.projects += 1;
     });
 
-    // Raggruppa gli stream minori sotto "Altri"
-    const streamEntries = Array.from(streamMap.entries()).map(([stream, data]) => ({
+    // STREAM DISTRIBUTION per STATISTICHE: mostra SEMPRE tutti gli stream reali (senza aggregazione)
+    const allStreamEntries = Array.from(streamMap.entries()).map(([stream, data]) => ({
       stream,
       hours: data.hours,
       projects: data.projects,
       color: STREAM_COLORS[stream] || STREAM_COLORS.default
-    }));
+    })).sort((a, b) => b.hours - a.hours);
 
-    // Se c'è un filtro membro attivo, mostra tutti i suoi stream senza aggregazione
+    // Per le statistiche usiamo tutti gli stream reali
+    const streamDistribution = [...allStreamEntries];
+
+    // STREAM DISTRIBUTION per GRAFICI: mantiene l'aggregazione "Altri" per migliore visualizzazione
+    let streamDistributionForCharts;
     if (memberFilter && memberFilter.trim() !== '') {
-      // Ordina per ore decrescenti ma mostra tutti gli stream del membro
-      streamEntries.sort((a, b) => b.hours - a.hours);
-      var streamDistribution = streamEntries;
+      // Per membro specifico: mostra tutti i suoi stream
+      streamDistributionForCharts = [...allStreamEntries];
     } else {
-      // Logica normale: ordina per ore decrescenti e prendi i top 8
-      streamEntries.sort((a, b) => b.hours - a.hours);
-      const topStreams = streamEntries.slice(0, 8);
-      const minorStreams = streamEntries.slice(8);
+      // Per vista globale: aggrega gli stream minori in "Altri" solo per i grafici
+      const topStreamsForCharts = allStreamEntries.slice(0, 8);
+      const minorStreamsForCharts = allStreamEntries.slice(8);
 
-      var streamDistribution = [...topStreams];
+      streamDistributionForCharts = [...topStreamsForCharts];
       
-      // Se ci sono stream minori, aggregali in "Altri"
-      if (minorStreams.length > 0) {
-        const othersHours = minorStreams.reduce((sum, stream) => sum + stream.hours, 0);
-        const othersProjects = minorStreams.reduce((sum, stream) => sum + stream.projects, 0);
+      // Aggrega stream minori in "Altri" solo per i grafici
+      if (minorStreamsForCharts.length > 0) {
+        const othersHours = minorStreamsForCharts.reduce((sum, stream) => sum + stream.hours, 0);
+        const othersProjects = minorStreamsForCharts.reduce((sum, stream) => sum + stream.projects, 0);
         
-        streamDistribution.push({
+        streamDistributionForCharts.push({
           stream: 'Altri',
           hours: othersHours,
           projects: othersProjects,
-          color: '#9CA3AF' // Grigio per "Altri"
+          color: '#9CA3AF'
         });
       }
     }
@@ -535,7 +539,8 @@ const Dashboard = () => {
       statusDistribution,
       priorityDistribution,
       typeDistribution,
-      streamDistribution,
+      streamDistribution, // Per le statistiche: tutti gli stream reali
+      streamDistributionForCharts, // Per i grafici: con aggregazione "Altri"
       topProjects
     };
   };
@@ -548,7 +553,19 @@ const Dashboard = () => {
     
     if (savedData && savedCsv) {
       try {
-        setDashboardData(JSON.parse(savedData));
+        const parsedData = JSON.parse(savedData);
+        // Assicurati che tutti i campi necessari siano presenti
+        const completeData = {
+          ...emptyData,
+          ...parsedData,
+          // Assicurati che questi array esistano sempre
+          topProjects: parsedData.topProjects || [],
+          streamDistribution: parsedData.streamDistribution || [],
+          streamDistributionForCharts: parsedData.streamDistributionForCharts || parsedData.streamDistribution || [],
+          timeline: parsedData.timeline || [],
+          teamMembers: parsedData.teamMembers || []
+        };
+        setDashboardData(completeData);
         setCsvData(savedCsv);
         setLastUpdate(savedLastUpdate);
         console.log('Dati caricati dal localStorage');
@@ -573,6 +590,28 @@ const Dashboard = () => {
       }
     }
   }, [csvData, dateRange, selectedTeamMember]);
+
+  // Funzione per gestire il clic sulla timeline
+  const handleTimelineClick = (data: any) => {
+    if (data && data.activePayload && data.activePayload[0]) {
+      const clickedMonth = data.activePayload[0].payload;
+      if (clickedMonth.date) {
+        const selectedDate = new Date(clickedMonth.date);
+        
+        // Calcola primo e ultimo giorno del mese selezionato
+        const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        const lastDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        
+        // Aggiorna il filtro date
+        setDateRange({
+          start: firstDay.toISOString().split('T')[0],
+          end: lastDay.toISOString().split('T')[0]
+        });
+        
+        console.log(`Timeline: selezionato mese ${clickedMonth.month}, periodo: ${firstDay.toLocaleDateString()} - ${lastDay.toLocaleDateString()}`);
+      }
+    }
+  };
 
   // Funzione per gestire il caricamento del file CSV
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -707,61 +746,115 @@ const Dashboard = () => {
   };
 
   // Componente per i filtri
-  const FilterPanel = () => (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filtri:</span>
-        </div>
-        
-        {/* Filtro data */}
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-500" />
-          <label className="text-sm text-gray-600">Dal:</label>
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-            className="text-sm border border-gray-300 rounded px-2 py-1"
-          />
-          <label className="text-sm text-gray-600">Al:</label>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-            className="text-sm border border-gray-300 rounded px-2 py-1"
-          />
-        </div>
-        
-        {/* Filtro membro del team */}
-        <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-gray-500" />
-          <label className="text-sm text-gray-600">Membro:</label>
-          <select
-            value={selectedTeamMember}
-            onChange={(e) => setSelectedTeamMember(e.target.value)}
-            className="text-sm border border-gray-300 rounded px-2 py-1"
-          >
-            <option value="">Tutti</option>
-            {dashboardData?.teamMembers.map(member => (
-              <option key={member.name} value={member.name}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-          {selectedTeamMember && (
+  const FilterPanel = () => {
+    // Verifica se è stato selezionato un singolo mese
+    const isMonthFilter = () => {
+      const start = new Date(dateRange.start);
+      const end = new Date(dateRange.end);
+      const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+      const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+      
+      return start.getTime() === startOfMonth.getTime() && 
+             end.getTime() === endOfMonth.getTime();
+    };
+
+    const resetToFullRange = () => {
+      setDateRange({
+        start: '2025-04-01',
+        end: '2026-03-31'
+      });
+    };
+
+    const clearAllFilters = () => {
+      setDateRange({
+        start: '2025-04-01',
+        end: '2026-03-31'
+      });
+      setSelectedTeamMember('');
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Filtri:</span>
+            </div>
+            
+            {/* Filtro data */}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <label className="text-sm text-gray-600">Dal:</label>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              />
+              <label className="text-sm text-gray-600">Al:</label>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              />
+              {isMonthFilter() && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    📅 Mese selezionato
+                  </span>
+                  <button
+                    onClick={resetToFullRange}
+                    className="text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Mostra tutto
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Filtro membro del team */}
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <label className="text-sm text-gray-600">Membro:</label>
+              <select
+                value={selectedTeamMember}
+                onChange={(e) => setSelectedTeamMember(e.target.value)}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="">Tutti</option>
+                {dashboardData?.teamMembers.map(member => (
+                  <option key={member.name} value={member.name}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+              {selectedTeamMember && (
+                <button
+                  onClick={() => setSelectedTeamMember('')}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Bottone Pulisci tutti i filtri */}
+          {(selectedTeamMember || isMonthFilter()) && (
             <button
-              onClick={() => setSelectedTeamMember('')}
-              className="text-red-500 hover:text-red-700"
+              onClick={clearAllFilters}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors border border-gray-300"
             >
               <X className="w-4 h-4" />
+              Pulisci tutti i filtri
             </button>
           )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const hasData = dashboardData && (dashboardData.totalTeamHours > 0 || dashboardData.teamMembers.length > 0);
 
@@ -905,7 +998,7 @@ const Dashboard = () => {
                       Top 5 Progetti (per ore)
                     </h4>
                     <div className="space-y-2">
-                      {dashboardData.topProjects.map((project, index) => (
+                      {(dashboardData.topProjects || []).map((project, index) => (
                         <div key={index} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-gray-500 w-4">#{index + 1}</span>
@@ -995,9 +1088,14 @@ const Dashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
                 Timeline Ore per Stream
+                <span className="text-xs text-gray-500 ml-2">(Clicca su un mese per filtrare)</span>
               </h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dashboardData.timeline}>
+                <BarChart 
+                  data={dashboardData.timeline}
+                  onClick={handleTimelineClick}
+                  style={{ cursor: 'pointer' }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -1027,9 +1125,14 @@ const Dashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-green-500" />
                 Timeline Progetti per Mese
+                <span className="text-xs text-gray-500 ml-2">(Clicca su un mese per filtrare)</span>
               </h3>
               <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={dashboardData.timeline}>
+                <ComposedChart 
+                  data={dashboardData.timeline}
+                  onClick={handleTimelineClick}
+                  style={{ cursor: 'pointer' }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -1123,7 +1226,7 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
-                      data={dashboardData.streamDistribution.map(stream => ({
+                      data={(dashboardData.streamDistributionForCharts || []).map(stream => ({
                         name: stream.stream,
                         value: stream.projects
                       }))}
@@ -1133,7 +1236,7 @@ const Dashboard = () => {
                       outerRadius={80}
                       paddingAngle={2}
                     >
-                      {dashboardData.streamDistribution.map((entry, index) => (
+                      {(dashboardData.streamDistributionForCharts || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -1186,7 +1289,7 @@ const Dashboard = () => {
                 Membri del Team
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dashboardData.teamMembers.map((member) => (
+                {(dashboardData.teamMembers || []).map((member) => (
                   <div 
                     key={member.name} 
                     className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer transition-all hover:shadow-xl hover:scale-105 ${
