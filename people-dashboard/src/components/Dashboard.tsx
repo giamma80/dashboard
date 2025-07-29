@@ -1,53 +1,118 @@
 import { useState, useEffect } from 'react';
-import { Users, Clock, Building2, Upload, AlertCircle, CheckCircle, XCircle, Pause, ChevronUp, ChevronDown, Download } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Users, Upload, Download, Calendar, User, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart } from 'recharts';
 import DownloadSection from './DownloadSection';
 
-// Tipi per i dati
+// Tipi per i nuovi dati
 interface ProjectData {
-  progetto: string;
-  area: string;
-  inizioLavori: string;
-  responsabile: string;
+  name: string;
+  stream: string;
+  teamMember: string;
+  startDate: string;
   deliveryDeadline: string;
-  stato: string;
-  priorita: string;
-  ore: number;
+  status: string;
+  priority: string;
+  groupDriven: string;
+  neededHours: number;
+  notes?: string;
+  stakeholder?: string;
   type: string;
-  note?: string;
+}
+
+// Tipi per i dati aggregati
+interface StreamData {
+  stream: string;
+  hours: number;
+  projects: number;
+  color: string;
+}
+
+interface TimelineData {
+  month: string;
+  date: Date;
+  streamData: { [stream: string]: number };
+  totalHours: number;
+  totalProjects: number;
+}
+
+interface TeamMemberData {
+  name: string;
+  totalHours: number;
+  totalProjects: number;
+  streams: StreamData[];
+  workPressure: number; // percentuale del carico annuale
 }
 
 interface DashboardData {
-  totali: {
-    progetti: number;
-    persone: number;
-    oreStimate: number;
-    progettiAttivi: number;
-    progettiCompletati: number;
-    progettiBloccati: number;
-  };
-  stati: {
-    [key: string]: number;
-  };
-  aree: {
-    [key: string]: number;
-  };
-  persone: Array<{
-    nome: string;
-    progetti: number;
-    ore: number;
-    areaPrevalente: string;
-    mediaOrePerMese: number;
-    mediaOrePerProgetto: number;
-  }>;
-  priorita: {
-    [key: string]: number;
-  };
-  timeline: Array<{
-    mese: string;
-    progetti: number;
-    ore: number;
-  }>;
+  timeline: TimelineData[];
+  teamMembers: TeamMemberData[];
+  totalTeamHours: number;
+  totalTeamProjects: number;
+  teamWorkPressure: number;
+  statusDistribution: { [status: string]: number };
+  priorityDistribution: { [priority: string]: number };
+  typeDistribution: { [type: string]: number };
+  streamDistribution: StreamData[];
+  topProjects: { name: string; hours: number; stream: string; member: string; color: string }[];
+}
+
+// Configurazione colori per stream
+const STREAM_COLORS: { [key: string]: string } = {
+  'UnifAI': '#3B82F6',
+  'Data': '#10B981',
+  'Product Detail Page': '#F59E0B',
+  'Network Page': '#8B5CF6',
+  'AB Testing': '#EF4444',
+  'E-Business Performance': '#06B6D4',
+  'Migrations': '#84CC16',
+  'Compliance': '#F97316',
+  'Training': '#EC4899',
+  'Innovation': '#6366F1',
+  'Tech Development': '#14B8A6',
+  'Payment Methods': '#F472B6',
+  'Testing Automation': '#A855F7',
+  'UX/UI/CRO': '#22C55E',
+  'Accessibility': '#0EA5E9',
+  'Tech Maintenance': '#EAB308',
+  'E-Pos': '#DC2626',
+  'Content / Editorial': '#7C3AED',
+  'Heritage': '#059669',
+  'E-com exclusives': '#DB2777',
+  'E-Business': '#2563EB',
+  'Site Speed': '#16A34A',
+  'Finance': '#CA8A04',
+  'Strategy & Governance': '#9333EA',
+  'External driven streams': '#0891B2',
+  'Processes': '#65A30D',
+  'Network Management': '#C2410C',
+  'OCP': '#BE185D',
+  'Release Management': '#7C2D12',
+  'Procurement': '#1E40AF',
+  'Ceremonies': '#991B1B',
+  'Local Digital Reviews': '#365314',
+  'Altri': '#9CA3AF',
+  'default': '#6B7280'
+};
+
+// Configurazione ore lavorative
+const WORK_HOURS_PER_DAY = 8;
+const WORK_DAYS_PER_WEEK = 5; // Lunedì-Venerdì
+
+// Funzione per calcolare le ore lavorative disponibili in un periodo
+function calculateAvailableWorkHours(startDate: Date, endDate: Date): number {
+  let totalWorkDays = 0;
+  const currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay();
+    // 1-5 sono lunedì-venerdì (0 = domenica, 6 = sabato)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      totalWorkDays++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return totalWorkDays * WORK_HOURS_PER_DAY;
 }
 
 const Dashboard = () => {
@@ -58,127 +123,428 @@ const Dashboard = () => {
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [csvData, setCsvData] = useState<string | null>(null);
   
-  // State per l'ordinamento della tabella persone
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof DashboardData['persone'][0] | null;
-    direction: 'asc' | 'desc';
-  }>({ key: null, direction: 'asc' });
-  
-  // State per il filtro priorità (drill-down)
-  const [selectedPriorita, setSelectedPriorita] = useState<string | null>(null);
+  // State per i filtri
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: '2025-04-01',
+    end: '2026-03-31'
+  });
+  const [selectedTeamMember, setSelectedTeamMember] = useState<string>('');
   
   // State per il modale download
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
-  // Funzione per gestire l'ordinamento
-  const handleSort = (key: keyof DashboardData['persone'][0]) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Funzione per ordinare i dati delle persone
-  const getSortedPersone = () => {
-    if (!dashboardData?.persone) return [];
-    
-    const sortablePersone = [...dashboardData.persone];
-    
-    if (sortConfig.key) {
-      sortablePersone.sort((a, b) => {
-        const aValue = a[sortConfig.key!];
-        const bValue = b[sortConfig.key!];
-        
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          const comparison = aValue.localeCompare(bValue, 'it', { sensitivity: 'base' });
-          return sortConfig.direction === 'asc' ? comparison : -comparison;
-        }
-        
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          const comparison = aValue - bValue;
-          return sortConfig.direction === 'asc' ? comparison : -comparison;
-        }
-        
-        return 0;
-      });
-    }
-    
-    return sortablePersone;
-  };
-
-  // Componente per l'header ordinabile
-  const SortableHeader = ({ 
-    children, 
-    sortKey, 
-    className = "border border-gray-200 px-4 py-3 text-left font-semibold text-gray-800"
-  }: { 
-    children: React.ReactNode; 
-    sortKey: keyof DashboardData['persone'][0];
-    className?: string;
-  }) => (
-    <th 
-      className={`${className} cursor-pointer hover:bg-gray-100 transition-colors select-none`}
-      onClick={() => handleSort(sortKey)}
-    >
-      <div className="flex items-center gap-2">
-        <span>{children}</span>
-        <div className="flex flex-col">
-          <ChevronUp 
-            className={`w-3 h-3 ${
-              sortConfig.key === sortKey && sortConfig.direction === 'asc' 
-                ? 'text-blue-600' 
-                : 'text-gray-400'
-            }`} 
-          />
-          <ChevronDown 
-            className={`w-3 h-3 -mt-1 ${
-              sortConfig.key === sortKey && sortConfig.direction === 'desc' 
-                ? 'text-blue-600' 
-                : 'text-gray-400'
-            }`} 
-          />
-        </div>
-      </div>
-    </th>
-  );
-
   // Dati vuoti di default
   const emptyData: DashboardData = {
-    totali: {
-      progetti: 0,
-      persone: 0,
-      oreStimate: 0,
-      progettiAttivi: 0,
-      progettiCompletati: 0,
-      progettiBloccati: 0,
-    },
-    stati: {},
-    aree: {},
-    persone: [],
-    priorita: {},
-    timeline: [
-      { mese: "Gen", progetti: 0, ore: 0 },
-      { mese: "Feb", progetti: 0, ore: 0 },
-      { mese: "Mar", progetti: 0, ore: 0 },
-      { mese: "Apr", progetti: 0, ore: 0 },
-      { mese: "Mag", progetti: 0, ore: 0 },
-      { mese: "Giu", progetti: 0, ore: 0 },
-      { mese: "Lug", progetti: 0, ore: 0 },
-      { mese: "Ago", progetti: 0, ore: 0 },
-      { mese: "Set", progetti: 0, ore: 0 },
-      { mese: "Ott", progetti: 0, ore: 0 },
-      { mese: "Nov", progetti: 0, ore: 0 },
-      { mese: "Dic", progetti: 0, ore: 0 },
-    ]
+    timeline: [],
+    teamMembers: [],
+    totalTeamHours: 0,
+    totalTeamProjects: 0,
+    teamWorkPressure: 0,
+    statusDistribution: {},
+    priorityDistribution: {},
+    typeDistribution: {},
+    streamDistribution: [],
+    topProjects: []
+  };
+
+  // Funzione per parsare la data in formato DD/MM/YY
+  const parseDate = (dateStr: string): Date | null => {
+    // Restituisce null per date vuote o invalide invece di new Date()
+    if (!dateStr || dateStr.trim() === '') {
+      return null;
+    }
+    
+    try {
+      // Pulisce la stringa da caratteri strani
+      const cleanDateStr = dateStr.trim().replace(/[^\d\/]/g, '');
+      const parts = cleanDateStr.split('/');
+      
+      if (parts.length !== 3) {
+        console.warn('Formato data invalido (parti mancanti):', dateStr, '→', parts);
+        return null;
+      }
+      
+      const [day, month, year] = parts;
+      const dayNum = parseInt(day);
+      const monthNum = parseInt(month);
+      let yearNum = parseInt(year);
+      
+      // Validazione base
+      if (isNaN(dayNum) || isNaN(monthNum) || isNaN(yearNum)) {
+        console.warn('Formato data invalido (non numerici):', dateStr);
+        return null;
+      }
+      
+      if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12) {
+        console.warn('Formato data invalido (valori fuori range):', dateStr);
+        return null;
+      }
+      
+      // Logica migliorata per l'anno
+      let fullYear: number;
+      if (yearNum < 100) {
+        // Anno a 2 cifre: assumiamo che 00-30 sia 2000-2030, 31-99 sia 1931-1999
+        if (yearNum <= 30) {
+          fullYear = 2000 + yearNum;
+        } else {
+          fullYear = 1900 + yearNum;
+        }
+      } else {
+        // Anno già a 4 cifre
+        fullYear = yearNum;
+      }
+      
+      // Sanity check: gli anni dovrebbero essere ragionevoli (tra 1990 e 2050)
+      if (fullYear < 1990 || fullYear > 2050) {
+        console.warn('Anno fuori range ragionevole:', dateStr, '→', fullYear);
+        return null;
+      }
+      
+      const parsedDate = new Date(fullYear, monthNum - 1, dayNum);
+      
+      if (isNaN(parsedDate.getTime())) {
+        console.warn('Data risultante invalida:', dateStr, '→', parsedDate);
+        return null;
+      }
+      
+      return parsedDate;
+    } catch (error) {
+      console.warn('Errore nel parsing della data:', dateStr, error);
+      return null;
+    }
+  };
+
+  // Funzione per generare i mesi della timeline
+  const generateMonthsInRange = (startDate: Date, endDate: Date): TimelineData[] => {
+    const months: TimelineData[] = [];
+    const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    
+    while (current <= endDate) {
+      months.push({
+        month: current.toLocaleDateString('it-IT', { month: 'short', year: '2-digit' }),
+        date: new Date(current),
+        streamData: {},
+        totalHours: 0,
+        totalProjects: 0
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+    
+    return months;
+  };
+
+  // Funzione per verificare se un progetto è attivo in un determinato mese
+  const isProjectActiveInMonth = (project: ProjectData, monthDate: Date): boolean => {
+    const startDate = parseDate(project.startDate);
+    const endDate = parseDate(project.deliveryDeadline);
+    
+    // Se le date non sono valide, escludiamo il progetto
+    if (!startDate || !endDate) {
+      return false;
+    }
+    
+    const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    
+    return startDate <= monthEnd && endDate >= monthStart;
+  };
+
+  // Funzione per processare i dati CSV
+  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilter: string): DashboardData => {
+    const lines = csvContent.trim().split('\n');
+    
+    const projects: ProjectData[] = lines.slice(1).map(line => {
+      const values = line.split(';');
+      return {
+        name: values[0] || '',
+        stream: values[1] || '',
+        teamMember: values[2] || '',
+        startDate: values[3] || '',
+        deliveryDeadline: values[4] || '',
+        status: values[5] || '',
+        priority: values[6] || '',
+        groupDriven: values[7] || '',
+        neededHours: parseInt(values[8]) || 0,
+        notes: values[9] || '',
+        stakeholder: values[10] || '',
+        type: values[11] || ''
+      };
+    }).filter(project => project.name && project.teamMember);
+
+    // Applica filtro membro del team
+    const filteredProjects = memberFilter 
+      ? projects.filter(p => p.teamMember === memberFilter)
+      : projects;
+
+    // Applica filtro data
+    const startFilterDate = new Date(dateFilter.start);
+    const endFilterDate = new Date(dateFilter.end);
+    
+    const dateFilteredProjects = filteredProjects.filter(project => {
+      const projectStart = parseDate(project.startDate);
+      const projectEnd = parseDate(project.deliveryDeadline);
+      
+      // Escludiamo progetti con date invalide
+      if (!projectStart || !projectEnd) {
+        console.warn('Progetto escluso per date invalide:', project.name, 'Start:', project.startDate, 'End:', project.deliveryDeadline);
+        return false;
+      }
+      
+      return projectEnd >= startFilterDate && projectStart <= endFilterDate;
+    });
+
+    // Genera timeline
+    const timeline = generateMonthsInRange(startFilterDate, endFilterDate);
+    
+    // Popola timeline con dati dei progetti
+    timeline.forEach(month => {
+      const activeProjects = dateFilteredProjects.filter(project => 
+        isProjectActiveInMonth(project, month.date)
+      );
+      
+      month.totalProjects = activeProjects.length;
+      month.totalHours = activeProjects.reduce((sum, project) => {
+        // Distribuzione ore del progetto sui mesi attivi
+        const projectStart = parseDate(project.startDate);
+        const projectEnd = parseDate(project.deliveryDeadline);
+        
+        // Se le date non sono valide, salta il progetto
+        if (!projectStart || !projectEnd) {
+          return sum;
+        }
+        
+        const monthsActive = Math.max(1, Math.ceil((projectEnd.getTime() - projectStart.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+        return sum + (project.neededHours / monthsActive);
+      }, 0);
+      
+      // Raggruppa per stream con aggregazione degli stream minori
+      const monthStreamMap = new Map<string, number>();
+      
+      activeProjects.forEach(project => {
+        const projectStart = parseDate(project.startDate);
+        const projectEnd = parseDate(project.deliveryDeadline);
+        
+        // Se le date non sono valide, salta il progetto
+        if (!projectStart || !projectEnd) {
+          return;
+        }
+        
+        const monthsActive = Math.max(1, Math.ceil((projectEnd.getTime() - projectStart.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+        const hoursPortion = project.neededHours / monthsActive;
+        
+        if (!monthStreamMap.has(project.stream)) {
+          monthStreamMap.set(project.stream, 0);
+        }
+        monthStreamMap.set(project.stream, monthStreamMap.get(project.stream)! + hoursPortion);
+      });
+      
+      // Se c'è un filtro membro attivo, mostra tutti i suoi stream senza aggregazione
+      if (memberFilter && memberFilter.trim() !== '') {
+        // Mostra tutti gli stream del membro filtrato
+        monthStreamMap.forEach((hours, stream) => {
+          month.streamData[stream] = hours;
+          (month as any)[stream] = hours;
+        });
+      } else {
+        // Logica normale: ordina stream per ore e prendi i top 8
+        const monthStreamEntries = Array.from(monthStreamMap.entries()).sort((a, b) => b[1] - a[1]);
+        const topMonthStreams = monthStreamEntries.slice(0, 8);
+        const minorMonthStreams = monthStreamEntries.slice(8);
+        
+        // Popola i dati per i top stream
+        topMonthStreams.forEach(([stream, hours]) => {
+          month.streamData[stream] = hours;
+          (month as any)[stream] = hours;
+        });
+        
+        // Aggrega stream minori in "Altri"
+        if (minorMonthStreams.length > 0) {
+          const othersHours = minorMonthStreams.reduce((sum, [, hours]) => sum + hours, 0);
+          month.streamData['Altri'] = othersHours;
+          (month as any)['Altri'] = othersHours;
+        }
+      }
+    });
+
+    // Calcola dati membri del team
+    const teamMemberMap = new Map<string, TeamMemberData>();
+    
+    dateFilteredProjects.forEach(project => {
+      if (!teamMemberMap.has(project.teamMember)) {
+        teamMemberMap.set(project.teamMember, {
+          name: project.teamMember,
+          totalHours: 0,
+          totalProjects: 0,
+          streams: [],
+          workPressure: 0
+        });
+      }
+      
+      const member = teamMemberMap.get(project.teamMember)!;
+      member.totalHours += project.neededHours;
+      member.totalProjects += 1;
+    });
+
+    // Calcola distribuzione stream per ogni membro
+    teamMemberMap.forEach((member, memberName) => {
+      const memberProjects = dateFilteredProjects.filter(p => p.teamMember === memberName);
+      const streamMap = new Map<string, { hours: number; projects: number }>();
+      
+      memberProjects.forEach(project => {
+        if (!streamMap.has(project.stream)) {
+          streamMap.set(project.stream, { hours: 0, projects: 0 });
+        }
+        const streamData = streamMap.get(project.stream)!;
+        streamData.hours += project.neededHours;
+        streamData.projects += 1;
+      });
+      
+      // Ordina stream per ore e prendi i top 5 per ogni membro
+      const memberStreamEntries = Array.from(streamMap.entries()).map(([stream, data]) => ({
+        stream,
+        hours: data.hours,
+        projects: data.projects,
+        color: STREAM_COLORS[stream] || STREAM_COLORS.default
+      })).sort((a, b) => b.hours - a.hours);
+      
+      const topMemberStreams = memberStreamEntries.slice(0, 5);
+      const minorMemberStreams = memberStreamEntries.slice(5);
+      
+      member.streams = [...topMemberStreams];
+      
+      // Se ci sono stream minori, aggregali in "Altri"
+      if (minorMemberStreams.length > 0) {
+        const othersHours = minorMemberStreams.reduce((sum, stream) => sum + stream.hours, 0);
+        const othersProjects = minorMemberStreams.reduce((sum, stream) => sum + stream.projects, 0);
+        
+        member.streams.push({
+          stream: 'Altri',
+          hours: othersHours,
+          projects: othersProjects,
+          color: '#9CA3AF'
+        });
+      }
+    });
+
+    // Calcola il periodo dei dati per determinare le ore lavorative disponibili
+    // USA SEMPRE il range di filtro selezionato dall'utente
+    console.log('Usando range di filtro selezionato per calcolo ore:', {
+      startFilterDate: startFilterDate.toLocaleDateString(),
+      endFilterDate: endFilterDate.toLocaleDateString(),
+      totalProjects: dateFilteredProjects.length
+    });
+    
+    // Calcola le ore lavorative disponibili per persona nel periodo di filtro
+    const availableWorkHoursPerPerson = calculateAvailableWorkHours(startFilterDate, endFilterDate);
+    
+    console.log('Ore lavorative disponibili per persona (range filtro):', availableWorkHoursPerPerson);
+    
+    // Se il periodo è troppo breve (meno di un mese), usa un periodo minimo ragionevole
+    const minimumWorkHours = WORK_HOURS_PER_DAY * WORK_DAYS_PER_WEEK * 4; // 1 mese minimo
+    const finalAvailableHours = Math.max(availableWorkHoursPerPerson, minimumWorkHours);
+    
+    console.log('Ore finali usate per il calcolo:', finalAvailableHours);
+    
+    // Calcola work pressure per ogni membro
+    teamMemberMap.forEach(member => {
+      const rawPressure = (member.totalHours / finalAvailableHours) * 100;
+      member.workPressure = Math.min(rawPressure, 150);
+      console.log(`${member.name}: ${member.totalHours}h / ${finalAvailableHours}h = ${rawPressure.toFixed(1)}% (cap: ${member.workPressure.toFixed(1)}%)`);
+    });
+
+    const teamMembers = Array.from(teamMemberMap.values());
+    
+    // Calcola totali team
+    const totalTeamHours = teamMembers.reduce((sum, member) => sum + member.totalHours, 0);
+    const totalTeamProjects = teamMembers.reduce((sum, member) => sum + member.totalProjects, 0);
+    const totalTeamWorkHours = teamMembers.length * finalAvailableHours;
+    const teamWorkPressure = Math.min((totalTeamHours / totalTeamWorkHours) * 100, 150);
+
+    // Calcola distribuzioni
+    const statusDistribution: { [status: string]: number } = {};
+    const priorityDistribution: { [priority: string]: number } = {};
+    const typeDistribution: { [type: string]: number } = {};
+    const streamMap = new Map<string, { hours: number; projects: number }>();
+
+    dateFilteredProjects.forEach(project => {
+      statusDistribution[project.status] = (statusDistribution[project.status] || 0) + 1;
+      priorityDistribution[project.priority] = (priorityDistribution[project.priority] || 0) + 1;
+      typeDistribution[project.type] = (typeDistribution[project.type] || 0) + 1;
+      
+      if (!streamMap.has(project.stream)) {
+        streamMap.set(project.stream, { hours: 0, projects: 0 });
+      }
+      const streamData = streamMap.get(project.stream)!;
+      streamData.hours += project.neededHours;
+      streamData.projects += 1;
+    });
+
+    // Raggruppa gli stream minori sotto "Altri"
+    const streamEntries = Array.from(streamMap.entries()).map(([stream, data]) => ({
+      stream,
+      hours: data.hours,
+      projects: data.projects,
+      color: STREAM_COLORS[stream] || STREAM_COLORS.default
+    }));
+
+    // Se c'è un filtro membro attivo, mostra tutti i suoi stream senza aggregazione
+    if (memberFilter && memberFilter.trim() !== '') {
+      // Ordina per ore decrescenti ma mostra tutti gli stream del membro
+      streamEntries.sort((a, b) => b.hours - a.hours);
+      var streamDistribution = streamEntries;
+    } else {
+      // Logica normale: ordina per ore decrescenti e prendi i top 8
+      streamEntries.sort((a, b) => b.hours - a.hours);
+      const topStreams = streamEntries.slice(0, 8);
+      const minorStreams = streamEntries.slice(8);
+
+      var streamDistribution = [...topStreams];
+      
+      // Se ci sono stream minori, aggregali in "Altri"
+      if (minorStreams.length > 0) {
+        const othersHours = minorStreams.reduce((sum, stream) => sum + stream.hours, 0);
+        const othersProjects = minorStreams.reduce((sum, stream) => sum + stream.projects, 0);
+        
+        streamDistribution.push({
+          stream: 'Altri',
+          hours: othersHours,
+          projects: othersProjects,
+          color: '#9CA3AF' // Grigio per "Altri"
+        });
+      }
+    }
+
+    // Calcola top 5 progetti per ore
+    const topProjects = dateFilteredProjects
+      .sort((a, b) => b.neededHours - a.neededHours)
+      .slice(0, 5)
+      .map(project => ({
+        name: project.name,
+        hours: project.neededHours,
+        stream: project.stream,
+        member: project.teamMember,
+        color: STREAM_COLORS[project.stream] || STREAM_COLORS.default
+      }));
+
+    return {
+      timeline,
+      teamMembers,
+      totalTeamHours,
+      totalTeamProjects,
+      teamWorkPressure,
+      statusDistribution,
+      priorityDistribution,
+      typeDistribution,
+      streamDistribution,
+      topProjects
+    };
   };
 
   // Inizializza con dati vuoti e carica dati salvati
   useEffect(() => {
-    // Prova a caricare dati salvati dal localStorage
-    const savedData = localStorage.getItem('people-dashboard-data');
-    const savedCsv = localStorage.getItem('people-dashboard-csv');
-    const savedLastUpdate = localStorage.getItem('people-dashboard-lastUpdate');
+    const savedData = localStorage.getItem('team-dashboard-data');
+    const savedCsv = localStorage.getItem('team-dashboard-csv');
+    const savedLastUpdate = localStorage.getItem('team-dashboard-lastUpdate');
     
     if (savedData && savedCsv) {
       try {
@@ -195,232 +561,213 @@ const Dashboard = () => {
     }
   }, []);
   
-  // Re-processa i dati quando cambia il filtro priorità
+  // Re-processa i dati quando cambiano i filtri
   useEffect(() => {
     if (csvData) {
       try {
-        const newData = processCSV(csvData, selectedPriorita);
+        const newData = processCSV(csvData, dateRange, selectedTeamMember);
         setDashboardData(newData);
       } catch (err) {
-        console.error("Errore nel re-processing:", err);
+        console.error('Errore nel processamento CSV:', err);
+        setError('Errore nel processamento dei dati');
       }
     }
-  }, [selectedPriorita, csvData]);
+  }, [csvData, dateRange, selectedTeamMember]);
 
-  // Funzione per processare il CSV
-  const processCSV = (csvText: string, prioritaFilter?: string | null): DashboardData => {
-    try {
-      console.log("=== INIZIO ELABORAZIONE CSV PEOPLE ===");
-      
-      const cleanText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const allLines = cleanText.split('\n');
-      console.log("Totale righe nel file:", allLines.length);
-      
-      // Trova l'header e le righe di dati
-      let headerIndex = -1;
-      for (let i = 0; i < allLines.length; i++) {
-        if (allLines[i].includes('Progetti Correnti e Pianificati') && allLines[i].includes('Area di Competenza')) {
-          headerIndex = i;
-          break;
-        }
-      }
-      
-      if (headerIndex === -1) {
-        throw new Error("Header non trovato nel CSV");
-      }
-      
-      const dataLines = allLines.slice(headerIndex + 1).filter(line => line.trim());
-      console.log("Righe di dati trovate:", dataLines.length);
-      
-      const records: ProjectData[] = [];
-      
-      dataLines.forEach((line) => {
-        const parts = line.split(';').map(p => p.replace(/"/g, '').trim());
-        
-        if (parts.length >= 12 && parts[0]) {
-          records.push({
-            progetto: parts[0],
-            area: parts[1] || '',
-            inizioLavori: parts[2] || '',
-            responsabile: parts[3] || '',
-            deliveryDeadline: parts[6] || '',
-            stato: parts[7] || '',
-            priorita: parts[8] || '',
-            ore: parseInt(parts[10]) || 0,
-            type: parts[12] || '',
-            note: parts[11] || ''
-          });
-        }
-      });
-      
-      console.log("Record processati:", records.length);
-      
-      // Filtro per priorità se specificato
-      const filteredRecords = prioritaFilter 
-        ? records.filter(r => r.priorita === prioritaFilter)
-        : records;
-      
-      console.log("Record dopo filtro priorità:", filteredRecords.length);
-      
-      if (filteredRecords.length === 0) {
-        throw new Error("Nessun record valido trovato");
-      }
-      
-      // === CALCOLI ===
-      
-      // Totali
-      const totalOre = filteredRecords.reduce((sum, r) => sum + r.ore, 0);
-      const personeUniche = new Set(
-        filteredRecords
-          .map(r => r.responsabile)
-          .filter(r => r)
-          .flatMap(r => r.split('-').map(n => n.trim()))
-          .filter(n => n)
-      );
-      
-      // Stati
-      const statiCount: { [key: string]: number } = {};
-      filteredRecords.forEach(r => {
-        const stato = r.stato || 'Non specificato';
-        statiCount[stato] = (statiCount[stato] || 0) + 1;
-      });
-      
-      // Aree
-      const areeCount: { [key: string]: number } = {};
-      filteredRecords.forEach(r => {
-        const area = r.area || 'Non specificata';
-        areeCount[area] = (areeCount[area] || 0) + 1;
-      });
-      
-      // Priorità
-      const prioritaCount: { [key: string]: number } = {};
-      records.forEach(r => {
-        const priorita = r.priorita || 'Non specificata';
-        prioritaCount[priorita] = (prioritaCount[priorita] || 0) + 1;
-      });
-      
-      // Persone
-      const personeMap: { [key: string]: { progetti: number; ore: number; aree: { [key: string]: number } } } = {};
-      
-      filteredRecords.forEach(r => {
-        if (r.responsabile) {
-          const nomi = r.responsabile.split('-').map(n => n.trim()).filter(n => n);
-          nomi.forEach(nome => {
-            if (!personeMap[nome]) {
-              personeMap[nome] = { progetti: 0, ore: 0, aree: {} };
-            }
-            personeMap[nome].progetti++;
-            personeMap[nome].ore += r.ore / nomi.length;
-            
-            const area = r.area || 'Non specificata';
-            personeMap[nome].aree[area] = (personeMap[nome].aree[area] || 0) + 1;
-          });
-        }
-      });
-      
-      const persone = Object.entries(personeMap).map(([nome, data]) => {
-        const areaPrevalente = Object.entries(data.aree).reduce((max, [area, count]) => 
-          count > max.count ? { area, count } : max, { area: '', count: 0 }
-        ).area;
-        
-        // Calcolo media ore per mese (assumendo 12 mesi)
-        const mediaOrePerMese = Math.round((data.ore / 12) * 10) / 10;
-        
-        // Calcolo media ore per progetto
-        const mediaOrePerProgetto = data.progetti > 0 ? Math.round((data.ore / data.progetti) * 10) / 10 : 0;
-        
-        return {
-          nome,
-          progetti: data.progetti,
-          ore: Math.round(data.ore),
-          areaPrevalente,
-          mediaOrePerMese,
-          mediaOrePerProgetto
-        };
-      }).sort((a, b) => b.progetti - a.progetti);
-      
-      // Timeline (placeholder - da implementare logica specifica se necessario)
-      const timeline = emptyData.timeline;
-      
-      console.log("=== ELABORAZIONE COMPLETATA ===");
-      
-      return {
-        totali: {
-          progetti: filteredRecords.length,
-          persone: personeUniche.size,
-          oreStimate: totalOre,
-          progettiAttivi: statiCount['In corso'] || 0,
-          progettiCompletati: statiCount['Completato'] || 0,
-          progettiBloccati: statiCount['Bloccato'] || 0,
-        },
-        stati: statiCount,
-        aree: areeCount,
-        persone,
-        priorita: prioritaCount,
-        timeline
-      };
-      
-    } catch (err) {
-      console.error("ERRORE:", err);
-      throw new Error(`Errore elaborazione: ${(err as Error).message}`);
-    }
-  };
-
-  // Handler per il caricamento del file
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Funzione per gestire il caricamento del file CSV
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsLoading(true);
     setError(null);
 
-    try {
-      console.log("Caricamento file:", file.name);
-      const text = await file.text();
-      console.log("File letto, dimensione:", text.length, "caratteri");
-      
-      const newData = processCSV(text, selectedPriorita);
-      console.log("Dati elaborati con successo!");
-      
-      setCsvData(text); // Salva i dati CSV per future elaborazioni
-      setDashboardData(newData);
-      setLastUpdate(new Date().toLocaleTimeString());
-      
-      // Salva i dati nel localStorage per la funzionalità offline
-      localStorage.setItem('people-dashboard-csv', text);
-      localStorage.setItem('people-dashboard-data', JSON.stringify(newData));
-      localStorage.setItem('people-dashboard-lastUpdate', new Date().toLocaleTimeString());
-      
-      // Reset del file input
-      event.target.value = '';
-      
-    } catch (err) {
-      console.error("Errore caricamento:", err);
-      setError((err as Error).message);
-    } finally {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvContent = e.target?.result as string;
+        const processedData = processCSV(csvContent, dateRange, selectedTeamMember);
+        
+        setDashboardData(processedData);
+        setCsvData(csvContent);
+        
+        const now = new Date().toLocaleString('it-IT');
+        setLastUpdate(now);
+        
+        // Salva dati nel localStorage
+        localStorage.setItem('team-dashboard-data', JSON.stringify(processedData));
+        localStorage.setItem('team-dashboard-csv', csvContent);
+        localStorage.setItem('team-dashboard-lastUpdate', now);
+        
+        console.log('Dati processati e salvati con successo');
+      } catch (err) {
+        console.error('Errore nel caricamento file:', err);
+        setError('Errore nel caricamento del file CSV. Verifica il formato.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    reader.onerror = () => {
+      setError('Errore nella lettura del file');
       setIsLoading(false);
-    }
+    };
+
+    reader.readAsText(file);
   };
 
-  // Controllo se dashboardData è null
-  if (!dashboardData) {
+  // Componente Gauge per la pressione di lavoro
+  const WorkPressureGauge = ({ value, maxValue = 150, size = 120, title }: { 
+    value: number; 
+    maxValue?: number; 
+    size?: number; 
+    title: string;
+  }) => {
+    // Calcola la percentuale reale del valore rispetto al range 0-maxValue
+    const valuePercentage = Math.min((value / maxValue) * 100, 100);
+    
+    // L'arco va da -90° a +90° (180° totali)
+    // 0% = -90°, 100% = +90°
+    const needleAngle = -90 + (valuePercentage / 100) * 180;
+    
+    const getColor = (val: number) => {
+      if (val < 80) return '#10B981'; // Verde (sotto 80%)
+      if (val <= 100) return '#F59E0B'; // Giallo (80-100%)
+      return '#EF4444'; // Rosso (sopra 100%)
+    };
+
+    const radius = size / 2 - 20;
+    const centerX = size / 2;
+    const centerY = size / 2;
+    
+    // Calcola la lunghezza dell'arco da colorare
+    const arcLength = (valuePercentage / 100) * Math.PI * radius;
+    const totalArcLength = Math.PI * radius;
+
+    return (
+      <div className="flex flex-col items-center">
+        <div className="relative" style={{ width: size, height: size / 2 + 20 }}>
+          {/* Sfondo gauge - arco completo grigio */}
+          <svg width={size} height={size / 2 + 20} className="absolute">
+            {/* Arco di sfondo */}
+            <path
+              d={`M 20 ${centerY} A ${radius} ${radius} 0 0 1 ${size - 20} ${centerY}`}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+            
+            {/* Arco colorato - deve partire da sinistra */}
+            <path
+              d={`M 20 ${centerY} A ${radius} ${radius} 0 0 1 ${size - 20} ${centerY}`}
+              fill="none"
+              stroke={getColor(value)}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={`${arcLength} ${totalArcLength}`}
+              strokeDashoffset="0"
+            />
+          </svg>
+          
+          {/* Ago - ruotato dall'angolo calcolato */}
+          <div 
+            className="absolute bg-gray-800 origin-bottom rounded-full"
+            style={{
+              width: '2px',
+              height: radius - 15,
+              left: centerX - 1,
+              bottom: 20,
+              transform: `rotate(${needleAngle}deg)`,
+              transformOrigin: 'bottom center'
+            }}
+          />
+          
+          {/* Centro - punto di rotazione */}
+          <div 
+            className="absolute w-4 h-4 bg-gray-800 rounded-full border-2 border-white"
+            style={{
+              left: centerX - 8,
+              bottom: 12
+            }}
+          />
+        </div>
+        
+        <div className="text-center mt-2">
+          <div className="text-sm font-medium text-gray-900">{title}</div>
+          <div className="text-xs text-gray-600">
+            {Math.round(value)}% {value > 150 ? '(Max 150%)' : value > 100 ? '(Overtime)' : ''}
+          </div>
+          <div className="text-xs text-gray-400 mt-1">
+            Ore effettive / Ore disponibili
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente per i filtri
+  const FilterPanel = () => (
+    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700">Filtri:</span>
+        </div>
+        
+        {/* Filtro data */}
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-gray-500" />
+          <label className="text-sm text-gray-600">Dal:</label>
+          <input
+            type="date"
+            value={dateRange.start}
+            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+            className="text-sm border border-gray-300 rounded px-2 py-1"
+          />
+          <label className="text-sm text-gray-600">Al:</label>
+          <input
+            type="date"
+            value={dateRange.end}
+            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+            className="text-sm border border-gray-300 rounded px-2 py-1"
+          />
+        </div>
+        
+        {/* Filtro membro del team */}
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-gray-500" />
+          <label className="text-sm text-gray-600">Membro:</label>
+          <select
+            value={selectedTeamMember}
+            onChange={(e) => setSelectedTeamMember(e.target.value)}
+            className="text-sm border border-gray-300 rounded px-2 py-1"
+          >
+            <option value="">Tutti</option>
+            {dashboardData?.teamMembers.map(member => (
+              <option key={member.name} value={member.name}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+          {selectedTeamMember && (
+            <button
+              onClick={() => setSelectedTeamMember('')}
+              className="text-red-500 hover:text-red-700"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const hasData = dashboardData && (dashboardData.totalTeamHours > 0 || dashboardData.teamMembers.length > 0);
+
+  if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Caricamento...</div>;
   }
-
-  // Controllo se non ci sono dati
-  const hasData = dashboardData.totali.progetti > 0;
-
-  // Funzioni di utilità per icone stato
-  const getStatoIcon = (stato: string) => {
-    switch (stato.toLowerCase()) {
-      case 'completato': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'in corso': return <Clock className="w-4 h-4 text-blue-500" />;
-      case 'bloccato': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'da fare': return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      case 'in revisione': return <Pause className="w-4 h-4 text-purple-500" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -435,7 +782,7 @@ const Dashboard = () => {
                 <div className="w-4 h-4 bg-green-500 rounded"></div>
                 <div className="w-4 h-4 bg-purple-500 rounded"></div>
               </div>
-              People Dashboard
+              Team Dashboard
             </h1>
             <div>
               <button
@@ -447,328 +794,537 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <p className="text-gray-600 text-sm mb-4">Gestione progetti e allocazione risorse</p>
+          <p className="text-gray-600 text-sm mb-4">Dashboard di gestione progetti e allocazione risorse del team</p>
+          {lastUpdate && (
+            <p className="text-xs text-gray-500">
+              Ultimo aggiornamento: {lastUpdate}
+            </p>
+          )}
         </div>
 
         {!hasData ? (
           // Stato vuoto
-          <div className="bg-white rounded-lg shadow-md p-8 text-center mb-6">
-            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">Nessun Dato Disponibile</h2>
-            <p className="text-gray-500 mb-4">Carica un CSV per visualizzare i progetti e le persone</p>
+          <div className="text-center py-12">
+            <div className="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto">
+              <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Carica dati del team
+              </h3>
+              <p className="text-gray-600 mb-6 text-sm">
+                Carica un file CSV con i dati dei progetti per visualizzare la dashboard
+              </p>
+              <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                <Upload className="w-4 h-4 mr-2" />
+                Seleziona file CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              {error && (
+                <p className="text-red-600 text-sm mt-4">{error}</p>
+              )}
+              <p className="text-center text-gray-500 text-sm mt-3">
+                Carica un file CSV per visualizzare progetti, timeline e allocazioni del team
+              </p>
+            </div>
           </div>
         ) : (
           // Dashboard con dati
-          <>
-            {/* Cards metriche principali */}
-            <div className="grid grid-cols-4 gap-6 mb-8">
-              <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-900">{dashboardData.totali.progetti}</div>
-                  <div className="text-blue-700 text-md font-medium">Progetti Totali</div>
-                  <div className="text-s text-blue-600 bg-blue-100 px-2 py-1 rounded mt-1">
-                    📋 {dashboardData.totali.progettiAttivi} attivi
-                  </div>
-                </div>
-              </div>
+          <div className="space-y-6">
+            {/* Panel filtri */}
+            <FilterPanel />
 
-              <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-900">{dashboardData.totali.persone}</div>
-                  <div className="text-green-700 text-md font-medium">Persone Coinvolte</div>
-                  <div className="text-s text-green-600 bg-green-100 px-2 py-1 rounded mt-1">
-                    👥 {(dashboardData.totali.progetti / dashboardData.totali.persone).toFixed(1)} prog/pers
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-900">{dashboardData.totali.oreStimate}</div>
-                  <div className="text-orange-700 text-md font-medium">Ore Stimate</div>
-                  <div className="text-s text-orange-600 bg-orange-100 px-2 py-1 rounded mt-1">
-                    ⏱️ {(dashboardData.totali.oreStimate / dashboardData.totali.progetti).toFixed(1)} ore/prog
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-900">{dashboardData.totali.progettiCompletati}</div>
-                  <div className="text-purple-700 text-md font-medium">Completati</div>
-                  <div className="text-s text-purple-600 bg-purple-100 px-2 py-1 rounded mt-1">
-                    ✅ {((dashboardData.totali.progettiCompletati / dashboardData.totali.progetti) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Layout principale */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              {/* Stati Progetti */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Stati Progetti</h3>
-                <div className="space-y-3">
-                  {Object.entries(dashboardData.stati).map(([stato, count]) => (
-                    <div key={stato} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        {getStatoIcon(stato)}
-                        <span className="font-medium text-gray-900">{stato}</span>
-                      </div>
-                      <span className="text-lg font-bold text-gray-700">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Aree di Competenza */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Aree di Competenza</h3>
-                <div className="space-y-3">
-                  {Object.entries(dashboardData.aree).map(([area, count]) => (
-                    <div key={area} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-blue-500" />
-                        <span className="font-medium text-gray-900">{area}</span>
-                      </div>
-                      <span className="text-lg font-bold text-blue-600">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Priorità - Grafico a torta */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Distribuzione Priorità
-                  {selectedPriorita && (
-                    <div className="text-sm font-normal text-blue-600 mt-1">
-                      Filtro attivo: {selectedPriorita}
-                      <button 
-                        onClick={() => setSelectedPriorita(null)}
-                        className="ml-2 px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-xs transition-colors"
-                      >
-                        Rimuovi filtro
-                      </button>
-                    </div>
-                  )}
+            {/* Riga 1: Statistiche Generali + Pressione Team */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Statistics Card - Espansa */}
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-500" />
+                  Statistiche Generali
                 </h3>
-                <div className="h-96 relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={Object.entries(dashboardData.priorita).map(([priorita, count]) => ({
-                          name: priorita,
-                          value: count,
-                          color: priorita === 'Alta' ? '#dc2626' : 
-                                 priorita === 'Media' ? '#f59e0b' : 
-                                 priorita === 'Bassa' ? '#059669' : '#6366f1'
-                        }))}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={120}
-                        paddingAngle={2}
-                        fill="#8884d8"
-                        dataKey="value"
-                        onClick={(data) => {
-                          if (selectedPriorita === data.name) {
-                            setSelectedPriorita(null);
-                          } else {
-                            setSelectedPriorita(data.name);
-                          }
-                        }}
-                        className="cursor-pointer"
-                      >
-                        {Object.entries(dashboardData.priorita).map(([priorita], index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={priorita === 'Alta' ? '#dc2626' : 
-                                  priorita === 'Media' ? '#f59e0b' : 
-                                  priorita === 'Bassa' ? '#059669' : '#6366f1'}
-                            stroke={selectedPriorita === priorita ? '#ffffff' : 'transparent'}
-                            strokeWidth={selectedPriorita === priorita ? 4 : 0}
-                            style={{
-                              filter: selectedPriorita === priorita ? 'brightness(1.1)' : 'none',
-                              transition: 'all 0.2s ease'
-                            }}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [
-                          `${value} progetti`, 
-                          `Priorità ${name}`
-                        ]}
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                          fontSize: '14px'
-                        }}
-                        labelStyle={{ 
-                          color: '#1f2937',
-                          fontWeight: '600'
-                        }}
-                      />
-                      <Legend 
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value) => (
-                          <span style={{ 
-                            color: selectedPriorita === value ? '#1f2937' : '#6b7280',
-                            fontWeight: selectedPriorita === value ? '600' : '500',
-                            fontSize: '14px'
-                          }}>
-                            {value}
-                          </span>
-                        )}
-                        iconType="circle"
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  
-                  {/* Testo centrale della ciambella */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-3xl font-bold text-gray-800">
-                      {Object.values(dashboardData.priorita).reduce((sum, count) => sum + count, 0)}
-                    </div>
-                    <div className="text-sm text-gray-600 font-semibold mt-1">
-                      Progetti Totali
-                    </div>
-                    {selectedPriorita && (
-                      <div className="text-xs text-blue-600 mt-2 font-semibold px-2 py-1 bg-blue-100 rounded-full">
-                        Filtrato: {selectedPriorita}
-                      </div>
-                    )}
+                
+                {/* Statistiche Base */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{dashboardData.totalTeamProjects}</div>
+                    <div className="text-sm text-gray-600">Progetti Totali</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{dashboardData.totalTeamHours}</div>
+                    <div className="text-sm text-gray-600">Ore Totali</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{dashboardData.teamMembers.length}</div>
+                    <div className="text-sm text-gray-600">Membri Team</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{dashboardData.streamDistribution.length}</div>
+                    <div className="text-sm text-gray-600">Stream Attivi</div>
                   </div>
                 </div>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-blue-800 font-medium">
-                      💡 Clicca su una fetta per filtrare tutta la dashboard per priorità
-                    </span>
-                  </div>
-                  {selectedPriorita && (
-                    <div className="text-xs text-blue-600 mt-2 italic">
-                      Dashboard attualmente filtrata per priorità: <strong>{selectedPriorita}</strong>
+
+                {/* Sezione Avanzata */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Top 5 Stream */}
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      Top 5 Stream (per ore)
+                    </h4>
+                    <div className="space-y-2">
+                      {dashboardData.streamDistribution
+                        .sort((a, b) => b.hours - a.hours)
+                        .slice(0, 5)
+                        .map((stream, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-gray-500 w-4">#{index + 1}</span>
+                              <div 
+                                className="w-2 h-2 rounded-full" 
+                                style={{ backgroundColor: stream.color }}
+                              ></div>
+                              <span className="text-sm text-gray-700 truncate max-w-[100px]">
+                                {stream.stream}
+                              </span>
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {stream.hours}h
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Top 5 Progetti */}
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                      Top 5 Progetti (per ore)
+                    </h4>
+                    <div className="space-y-2">
+                      {dashboardData.topProjects.map((project, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-500 w-4">#{index + 1}</span>
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ backgroundColor: project.color }}
+                            ></div>
+                            <span className="text-sm text-gray-700 truncate max-w-[100px]" title={project.name}>
+                              {project.name}
+                            </span>
+                          </div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {project.hours}h
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status Team Members */}
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      Status Membri Team
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Disponibili (&lt;80%)</span>
+                        </div>
+                        <div className="text-lg font-bold text-green-600">
+                          {dashboardData.teamMembers.filter(m => m.workPressure < 80).length}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Occupati (80-100%)</span>
+                        </div>
+                        <div className="text-lg font-bold text-yellow-600">
+                          {dashboardData.teamMembers.filter(m => m.workPressure >= 80 && m.workPressure <= 100).length}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Sovraccarichi (&gt;100%)</span>
+                        </div>
+                        <div className="text-lg font-bold text-red-600">
+                          {dashboardData.teamMembers.filter(m => m.workPressure > 100).length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Total Gauge */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Gauge className="w-5 h-5 text-orange-500" />
+                  Pressione Team
+                </h3>
+                <div className="flex justify-center">
+                  <WorkPressureGauge
+                    value={dashboardData.teamWorkPressure}
+                    maxValue={150}
+                    size={180}
+                    title="Carico Team Totale"
+                  />
+                </div>
+                <div className="mt-4 text-center text-sm text-gray-600">
+                  <div>Ore totali: {dashboardData.totalTeamHours}</div>
+                  <div>Progetti totali: {dashboardData.totalTeamProjects}</div>
+                  <div className="text-xs mt-2 text-gray-500">
+                    <div>Pressione calcolata su:</div>
+                    <div>8h/giorno × 5 giorni/sett. × {dashboardData.teamMembers.length} membri</div>
+                    <div>nel periodo {dashboardData.timeline[0]?.month} - {dashboardData.timeline[dashboardData.timeline.length - 1]?.month}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Persone */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Allocazione Persone</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <SortableHeader sortKey="nome">Nome</SortableHeader>
-                      <SortableHeader sortKey="progetti" className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">Progetti</SortableHeader>
-                      <SortableHeader sortKey="ore" className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">Ore Totali</SortableHeader>
-                      <SortableHeader sortKey="mediaOrePerMese" className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">Ore/Mese</SortableHeader>
-                      <SortableHeader sortKey="mediaOrePerProgetto" className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">Ore/Progetto</SortableHeader>
-                      <SortableHeader sortKey="areaPrevalente">Area Prevalente</SortableHeader>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getSortedPersone().map((persona, index) => (
-                      <tr key={persona.nome} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <td className="border border-gray-200 px-4 py-3 font-medium text-gray-800">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                              {persona.nome.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
-                            </div>
-                            {persona.nome}
-                          </div>
-                        </td>
-                        <td className="border border-gray-200 px-4 py-3 text-center">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                            {persona.progetti}
-                          </span>
-                        </td>
-                        <td className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-700">
-                          {persona.ore}h
-                        </td>
-                        <td className="border border-gray-200 px-4 py-3 text-center">
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
-                            {persona.mediaOrePerMese}h
-                          </span>
-                        </td>
-                        <td className="border border-gray-200 px-4 py-3 text-center">
-                          <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">
-                            {persona.mediaOrePerProgetto}h
-                          </span>
-                        </td>
-                        <td className="border border-gray-200 px-4 py-3">
-                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">
-                            {persona.areaPrevalente}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Riga 2: Timeline ore per stream */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Timeline Ore per Stream
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dashboardData.timeline}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      `${value.toFixed(1)}h`, 
+                      name
+                    ]}
+                    labelFormatter={(label) => `Mese: ${label}`}
+                  />
+                  <Legend />
+                  {/* Barra per ogni stream */}
+                  {Object.keys(dashboardData.timeline[0]?.streamData || {}).map((stream) => (
+                    <Bar
+                      key={stream}
+                      dataKey={stream}
+                      fill={STREAM_COLORS[stream] || STREAM_COLORS.default}
+                      name={stream}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Riga 3: Timeline progetti per mese */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-green-500" />
+                Timeline Progetti per Mese
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={dashboardData.timeline}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="totalProjects" fill="#10B981" name="Progetti" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="totalProjects" 
+                    stroke="#DC2626" 
+                    strokeWidth={3}
+                    dot={{ fill: '#DC2626', strokeWidth: 2, r: 4 }}
+                    name="Tendenza Progetti"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Riga 4: Tutti i grafici a torta */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Status Distribution */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-blue-500" />
+                  Stati Progetti
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(dashboardData.statusDistribution).map(([status, count]) => ({
+                        name: status,
+                        value: count
+                      }))}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {Object.keys(dashboardData.statusDistribution).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                      iconSize={8}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <div className="mt-4 text-sm text-gray-600 border-t pt-4">
-                <p><strong>Legenda:</strong></p>
-                <div className="flex gap-6 mt-2">
-                  <p>• <strong>Ore/Mese:</strong> Media ore distribuite su 12 mesi</p>
-                  <p>• <strong>Ore/Progetto:</strong> Media ore per progetto assegnato</p>
-                  <p>• <strong>Ordinamento:</strong> Clicca su qualsiasi header per ordinare</p>
-                </div>
+
+              {/* Priority Distribution */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-red-500" />
+                  Priorità Progetti
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(dashboardData.priorityDistribution).map(([priority, count]) => ({
+                        name: priority,
+                        value: count
+                      }))}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {Object.keys(dashboardData.priorityDistribution).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${index * 60 + 20}, 70%, 60%)`} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                      iconSize={8}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Stream Distribution */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-purple-500" />
+                  Distribuzione Stream
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={dashboardData.streamDistribution.map(stream => ({
+                        name: stream.stream,
+                        value: stream.projects
+                      }))}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {dashboardData.streamDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                      iconSize={8}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Type Distribution */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-orange-500" />
+                  Tipi Progetti
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(dashboardData.typeDistribution).map(([type, count]) => ({
+                        name: type,
+                        value: count
+                      }))}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {Object.keys(dashboardData.typeDistribution).map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${index * 80 + 40}, 70%, 60%)`} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                      iconSize={8}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          </>
+
+            {/* Team Members Cards - sotto tutto */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-500" />
+                Membri del Team
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {dashboardData.teamMembers.map((member) => (
+                  <div 
+                    key={member.name} 
+                    className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer transition-all hover:shadow-xl hover:scale-105 ${
+                      selectedTeamMember === member.name 
+                        ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-blue-100' 
+                        : 'hover:shadow-xl'
+                    }`}
+                    onClick={() => setSelectedTeamMember(
+                      selectedTeamMember === member.name ? '' : member.name
+                    )}
+                  >
+                    {/* Header con avatar e info base */}
+                    <div className="flex items-center gap-4 mb-6">
+                      {/* Avatar */}
+                      <div className="relative">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                          <svg 
+                            className="w-8 h-8 text-white" 
+                            fill="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      {/* Info personali */}
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1">
+                          {member.name}
+                        </h4>
+                        <div className="text-sm text-gray-500 mb-2">
+                          Senior Developer
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            {member.totalProjects} progetti
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            {member.totalHours}h totali
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Gauge centrale - più prominente */}
+                    <div className="mb-6 bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-center">
+                        <WorkPressureGauge
+                          value={member.workPressure}
+                          maxValue={150}
+                          size={140}
+                          title="Carico di Lavoro"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Stream distribution - ridisegnata */}
+                    <div className="mb-4">
+                      <div className="text-sm font-medium text-gray-700 mb-3">Distribuzione Stream</div>
+                      <div className="space-y-2">
+                        {member.streams.slice(0, 3).map((stream, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: stream.color }}
+                              ></div>
+                              <span className="text-xs text-gray-600 truncate max-w-[120px]">
+                                {stream.stream}
+                              </span>
+                            </div>
+                            <div className="text-xs font-medium text-gray-800">
+                              {stream.projects}p
+                            </div>
+                          </div>
+                        ))}
+                        {member.streams.length > 3 && (
+                          <div className="text-xs text-gray-500 text-center pt-1">
+                            +{member.streams.length - 3} altri stream
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Footer con statistiche */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="text-lg font-bold text-blue-600">
+                            {Math.round(member.totalHours / member.totalProjects)}h
+                          </div>
+                          <div className="text-xs text-gray-500">Media/Progetto</div>
+                        </div>
+                        <div>
+                          <div className={`text-lg font-bold ${
+                            member.workPressure > 100 ? 'text-red-600' : 
+                            member.workPressure > 80 ? 'text-yellow-600' : 'text-green-600'
+                          }`}>
+                            {member.workPressure > 100 ? 'Sovraccarico' : 
+                             member.workPressure > 80 ? 'Occupato' : 'Disponibile'}
+                          </div>
+                          <div className="text-xs text-gray-500">Status</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Upload new data button */}
+            <div className="text-center">
+              <label className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                <Upload className="w-5 h-5 mr-2" />
+                Carica nuovi dati CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              {error && (
+                <p className="text-red-600 text-sm mt-2">{error}</p>
+              )}
+            </div>
+          </div>
         )}
 
-        {/* Sezione Upload CSV */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Carica Dati Progetti</h3>
-          <div className="flex items-center justify-center gap-4">
-            <label className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
-              <Upload className="w-5 h-5" />
-              <span className="font-medium">Carica CSV</span>
-              <input 
-                type="file" 
-                accept=".csv" 
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isLoading}
-              />
-            </label>
-            {isLoading && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                <span className="font-medium">Elaborazione in corso...</span>
-              </div>
-            )}
-            {lastUpdate && (
-              <div className="text-green-600 text-sm font-medium">
-                ✅ Ultimo aggiornamento: {lastUpdate}
-              </div>
-            )}
-            {error && (
-              <div className="text-red-600 text-sm font-medium">
-                ❌ Errore: {error}
-              </div>
-            )}
-          </div>
-          <p className="text-center text-gray-500 text-sm mt-3">
-            Carica un file CSV per visualizzare progetti, persone e allocazioni
-          </p>
-        </div>
+        {/* Download Modal */}
+        <DownloadSection 
+          isOpen={showDownloadModal} 
+          onClose={() => setShowDownloadModal(false)} 
+        />
       </div>
-
-      {/* Sezione Download */}
-      <DownloadSection 
-        isOpen={showDownloadModal} 
-        onClose={() => setShowDownloadModal(false)} 
-      />
     </div>
   );
 };

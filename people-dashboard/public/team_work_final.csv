@@ -1,0 +1,281 @@
+﻿Name;Stream;Team Member;Start date;Delivery Deadline;Status;Priority;Group driven y/n;Needed hours;Notes;Stakeholder;Type
+Migrazione di Dashboard Power BI;UnifAI;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;80;;;Projects
+Creazione Dashboard monitoraggio Brand Interest e EMV per mercati;Data;Galelli Davide Andrea;11/04/25;30/12/25;In Progress;High;No;80;On hold per via del cambio deciso Da google sulla metrica di brand interest che sarà in test fino a fine settembre;;Projects
+PDP analyis;Product Detail Page;Galelli Davide Andrea;12/04/25;01/07/25;Completed;High;No;50;;;Projects
+Migrazione Dashboard Power BI sales;UnifAI;Galelli Davide Andrea;13/04/25;30/09/25;In Progress;High;No;120;still ongoing;;Projects
+Boutique pages performance aseessment;Network Page;Galelli Davide Andrea;14/04/25;19/07/25;Completed;Medium;No;32;;;Projects
+A/B testing algoritm PLPs;AB Testing;Galelli Davide Andrea;15/04/25;30/04/25;Completed;High;No;60;;;Projects
+Book an Appointment vs Digital Channel;Data;Galelli Davide Andrea;26/06/25;07/07/25;Completed;Low;No;4;;;Projects
+3D tracking ;Data;Galelli Davide Andrea;17/04/25;30/04/25;Completed;Medium;Yes;8;;;Projects
+Task Force US;E-Business Performance;Galelli Davide Andrea;18/07/25;03/09/25;To Start;High;No;32;;;Projects
+Customer Flow chart on Website;Data;Galelli Davide Andrea;01/04/25;31/12/25;Blocked;High;No;32;Waiting Group Tech for Release of a new field on a GCP table;;Projects
+Tracking Drop Down menu event subscription component;Data;Galelli Davide Andrea;19/06/25;26/06/25;Completed;High;No;2;https://agile.richemont.com/jira/browse/PANE-31975;;Projects
+Beyond the Watch new editorial components;Data;Galelli Davide Andrea;06/05/25;17/07/25;Completed;Medium;No;4;https://agile.richemont.com/jira/browse/PANE-31656;;Projects
+Tracking Code in Embedd subscription form;Data;Galelli Davide Andrea;17/07/25;30/07/25;In Progress;Medium;No;1;;;Projects
+Tracking Boutique Tour;Data;Galelli Davide Andrea;30/05/25;30/09/25;In Progress;Medium;No;4;;;Projects
+Payment methods on panerai.com ;Payment Methods;Galelli Davide Andrea;04/05/25;26/05/25;Completed;Medium;No;4;;;Projects
+QR code for Florence exposition;Content / Editorial;Galelli Davide Andrea;21/07/25;21/07/25;Completed;Medium;no;1; ;;Projects
+CR% analysis requested from Denis USA e-commerce manager;E-Business Performance;Galelli Davide Andrea;23/07/25;23/07/25;Completed;Medium;No;2;;;Projects
+ Google Traffic Analysis to segment for Locale vs Markets ;Data;Galelli Davide Andrea;22/07/25;23/07/25;In Review;High;No;6;da Analisi spot analysis si è evoluta a full flagged dashboard;;Projects
+Traffic Analysis on Specific country impacted by low livechat interaction in May vs April;Data;Galelli Davide Andrea;17/06/25;20/06/25;Completed;Medium;no;2;;;Projects
+Confluence Migration;Migrations;Guarda Alessandro;01/05/25;30/06/25;Completed;N.A.;Yes;24;Mandatory;;Projects
+Jira Migration;Migrations;Guarda Alessandro;01/07/25;30/08/25;In Progress;N.A.;Yes;24;Mandatory;;Projects
+CommerceUI Migration for emails Evaluation;Migrations;Guarda Alessandro;01/04/25;01/09/25;In Progress;N.A.;Yes;24;;;Projects
+Terms of Use content update & [US] update Maison websites with new state laws;Compliance;Guarda Alessandro;01/07/25;30/07/25;In Progress;N.A.;Yes;8;Mandatory;;Projects
+Corso Primo Soccorso;Training;Guarda Alessandro;21/07/25;25/07/25;To Start;N.A.;No;16;;;Projects
+Content Update for KR and SG ;Compliance;Guarda Alessandro;23/07/25;01/09/25;To Start;N.A.;Yes;8;https://richemont.atlassian.net/wiki/spaces/riccmpm/pages/518160717/Heads-up+on+content+updates+for+KR+and+SG;;Projects
+Virtual tour and scale up (FY26);Innovation;Guarda Alessandro;01/04/25;15/07/25;Completed;Medium;No;16;recoloring, communication with provider, rollout, scale up (preparation and pilot FY25) ;;Projects
+Promotions Setup and Presentation;Tech Development;Guarda Alessandro;01/05/25;30/10/25;In Progress;Medium;Yes;24;Setting up promotions on commerceUI for testing purposes, Informative PPT.;;Projects
+Payment methods Ric vs Epos vs panerai.com ;Payment Methods;Guarda Alessandro;01/06/25;31/08/25;In Progress;Medium;No;16;;;Projects
+Testing Automation Scenarios;Testing Automation;Guarda Alessandro;28/07/25;01/08/25;To Start;Medium;No;12;;;Projects
+Boutique detail page benchmarking;Network Page;Hoegsholt Nanna;03/03/25;11/07/25;Completed;Medium;No;6; ;;Projects
+Boutique detail page Figma mockup;Network Page;Hoegsholt Nanna;30/04/25;18/07/25;Completed;Medium;No;64; ;;Projects
+Boutique detail page story and allignment;Network Page;Hoegsholt Nanna;30/06/25;18/07/25;Completed;Medium;No;3; ;;Projects
+Private area figma review;UX/UI/CRO;Hoegsholt Nanna;01/04/25;30/06/25;Completed;Medium;No;3; ;;Projects
+Private area story;Innovation;Hoegsholt Nanna;01/04/25;01/04/25;Completed;Medium;No;2; ;;Projects
+Beyond the Watch new editorial articles component;UX/UI/CRO;Hoegsholt Nanna;15/04/25;06/06/25;Completed;Medium;No;64; ;;Projects
+Beyond the Watch new editorial articles authoring and testing;UX/UI/CRO;Hoegsholt Nanna;24/06/25;31/7/25;Completed;Medium;No;8; ;;Projects
+Beyond the Watch hub component;UX/UI/CRO;Hoegsholt Nanna;15/04/25;06/06/25;Completed;Medium;No;32; ;;Projects
+Beyond the Watch hub authoring and testing;UX/UI/CRO;Hoegsholt Nanna;24/06/25;31/7/25;Completed;Medium;No;5; ;;Projects
+Checkout new design UI/UX adjustments from CRO Agency;UX/UI/CRO;Hoegsholt Nanna;17/06/25;25/9/25;Completed;Medium;No;10; ;;Projects
+Back in stock redesign;UX/UI/CRO;Hoegsholt Nanna;01/06/25;13/6/25;Completed;Medium;No;24; ;;Projects
+Product card labels watch and straps;Innovation;Hoegsholt Nanna;15/04/25;15/5/25;Completed;Medium;No;3; ;;Projects
+Strap hub revamp;UX/UI/CRO;Hoegsholt Nanna;01/05/25;02/06/25;Completed;High;No;32; ;;Projects
+Eiliean editorial enrichement;UX/UI/CRO;Hoegsholt Nanna;06/05/25;10/06/25;Completed;High;No;3; ;;Projects
+Marina militare editorial enrichement;UX/UI/CRO;Hoegsholt Nanna;07/05/25; 27/6/25;Completed;High;No;3; ;;Projects
+Luna Rossa editorial enrichement;UX/UI/CRO;Hoegsholt Nanna;15/05/25;23/06/25;Completed;High;No;16; ;;Projects
+Userway implementation;Accessibility ;Hoegsholt Nanna;05/05/25;28/06/25;Completed;High;No;32; ;;Projects
+Accessibility statement authoring;UX/UI/CRO;Hoegsholt Nanna;07/06/25;28/08/25;Completed;High;No;16; ;;Projects
+Review Materials pages with new template;UX/UI/CRO;Hoegsholt Nanna;21/07/25;01/11/25;In Progress;High;No;64; ;;Projects
+Florence Exhibition Editorial Ecosystem;UX/UI/CRO;Hoegsholt Nanna;02/04/25;11/07/25;In Progress;High;No;;;;Projects
+Editorial Ecosystem - PAM01783;UX/UI/CRO;Hoegsholt Nanna;03/04/25;15/10/25;In Progress;High;No;;;;Projects
+Bug fixing reindex issue ;Tech Development;Manduci Valentina;01/04/25;01/06/25;Completed;High;No;10;After Autoindexation has been disabled by RIC by mistake, I analised the logs, read AEM documentation and fixed the issue;;Projects
+Bug fixing The View & Spark applications;Tech Maintenance;Manduci Valentina;15/05/25;19/05/25;Completed;High;No;5;FY26 novelties visible in the view & sparks applications;;Projects
+Implementation of variations for Spark Application;Tech Maintenance;Manduci Valentina;19/06/25;26/06/25;Completed;Low;No;1;How to implement variations in Spark app and colleagues training;;Projects
+Bug Biceps Privay policy links;E-Pos;Manduci Valentina;19/06/25;17/07/25;Completed;Medium;No;2;User redirected to wrong privacy policy page from Biceps;;Projects
+Support assets integration in The View;Tech Maintenance;Manduci Valentina;04/01/25;04/04/25;Completed;Low;No;1;Support and training on how to enrich and retrive assets in The View from OCP;;Projects
+Bug CCP privacy policy links;Tech Maintenance;Manduci Valentina;05/12/25;15/05/25;Completed;Medium;No;2;User redirected to wrong privacy policy page from CCP;;Projects
+WebConfig bug fixing;Tech Maintenance;Manduci Valentina;04/01/25;13/04/25;Completed;High;No;48;Debugging, writing new rules together with developers - testing new rules - coordinating deployments on VAL - STG - PRD , testing on PRD;;Projects
+Private Area;Tech Development;Manduci Valentina;01/04/25;10/06/25;In Review;High;No;400;Analyze the feasibility of the private area (documentation consultation - internal calls with developers), followed by development. Present the findings to the SFA team for initial approval, then proceed with integration and testing. After a second round of approval, conduct a RIC penetration test, address & analyse any bugs, and perform a second testing phase. First batch of  VIP accounts to be collected - extraction of swse ids and fill VIP txt files - second batch of VIP accounts to be collected- extraction of swse ids and fill VIP txt files - authoring the private area on CMS. Reauthoring at the end of the private area;;Projects
+Search integration in watch PLP;Tech Development;Manduci Valentina;01/04/25;03/06/25;Completed;Medium;No;80;Clean up of old catalogs queries - add new template inside bluepring node - add transaltions inside template to optimize rollout process - groovy script creation PLP order ranking - Authoring- content packages creation - testing phase and rollout on PRD.;;Projects
+Integration new Reset password form;Tech Development;Manduci Valentina;04/01/25;29/07/25;In Review;Medium;No;12; ;;Projects
+Integration new recover password form;Tech Development;Manduci Valentina;04/01/25;29/07/25;In Review;Medium;No;10; ;;Projects
+Integration new Registration overlay;Tech Development;Manduci Valentina;04/01/25;29/07/25;In Review;Medium;No;56; ;;Projects
+Integration New watch PDP;Product Detail Page;Manduci Valentina;04/01/25;29/07/25;In Progress;High;No;TBD;creation of new blueprint xpath queries - cleaning of old tempaltes - update existing catalogs with new template - deactivation and delete via groovy script old UI - new rollout - activate via groovy script new UI;;Projects
+Integration new checkout UI;Tech Development;Manduci Valentina;04/01/25;28/08/25;In Progress;Medium;No;120;update catalogs templates - author specific fields per specific locale - testing phase - stock synchronization issues fix in lower environments ;;Projects
+Collector's Corner;Tech Development;Manduci Valentina;04/07/25;15/06/25;In Review;Low;No;40;Collectors corner tech solution implemented;;Projects
+Integration new back in stock form;Tech Development;Manduci Valentina;14/07/25;29/07/25;In Progress;Medium;No;24;backend & forntend of new BISA form;;Projects
+Akamai bot manager KR;Site Speed;Manduci Valentina;17/04/25;06/12/25;In Progress;Medium;Yes;4;adjustments to be made by RIC, following PAN updates ;;Projects
+New boutique page rollout;Network Page;Manduci Valentina;06/01/25;28/08/25;In Progress;Medium;No;200;backend activation of new boutique page;;Projects
+Online Scarisity (PLP/PDP);Innovation;Matarazzo Silvia;20/07/25;30/09/25;To Start;High;No;8;;;Projects
+Email UI revamp;Tech Development;Matarazzo Silvia;01/04/25;30/06/25;Blocked;N.A.;No;40;Design done, project timeline done. Back.end delivery almost completed (missing few templates). The roll-out can start once the Costs for the content management is approved (Digital/CRM cost), and when the team can start to set the new emails into Commerce UI.;;Projects
+Boutique detail page revamp;Network Page;Matarazzo Silvia;10/02/25;30/09/25;In Progress;High;No;40;Brief AKQA, Benchmark, collecting business requirements, gab analisys on the process, process re-design, Template check and validation, Retroplanning, Story validation, Stakeholders presentation.;;Projects
+Private Area Front-end Implementation;Innovation;Matarazzo Silvia;01/04/25;30/09/25;In Progress;High;No;30;Brief, User Journey definition, Templates check and validations, retroplanning, story validation, UAT & pentest Planning, Stakeholder presentation,  Business requirements definition and guidelines for Ecom activation.;;Projects
+Private Area integrated with promotions for employees;Innovation;Matarazzo Silvia;15/09/25;30/03/26;To Start;Low;No;20;Finding a tech solution to fit the promotion with private access for employees, to increase the e-business sales;;Projects
+Checkout UI revamp and CRO integrations;Innovation;Matarazzo Silvia;01/04/25;30/10/25;In Progress;High;No;40;Benchmark analysis, CRO analysis, backlog refinement, prioritizations e retroplanning for 4 batch releases, evaluating with RIC some CR integrations in the flow, supervising testing phase.;;Projects
+BIS (demand and revamp);E-Business Performance;Matarazzo Silvia;01/05/25;28/07/25;Completed;Medium;No;6; QAD request,  User journey definition, template e story validation;;Projects
+Florence exibition & CN PIPL restrictions;Heritage;Matarazzo Silvia;15/07/25;24/07/25;Completed;Medium;No;2;Checking template, review the PIPL restriction for China clients;;Projects
+Collector's Corner;E-Business Performance;Matarazzo Silvia;01/04/25;30/05/25;Completed;High;No;15;Business requirement collections, Checking the tech solutions, Designing the user journey, defining rules for new catalogue management, ppt presentation, Story validation, Srpint scope e testing validation.;;Projects
+Promotions Setup and Presentation;Tech Development;Matarazzo Silvia;01/05/25;30/10/25;In Progress;Medium;Yes;4;Analysis of RIC documentation, review PPT for presenting features to PAN teams;;Projects
+Unguess User survey;Innovation;Matarazzo Silvia;15/07/25;30/09/25;To Start;Medium;No;5;;;Projects
+Limited Edition (tags/filters);Innovation;Matarazzo Silvia;02/01/25;30/03/25;Completed;High;No;5;Business requirement collections,  Designing the user journey, defining rules for new catalogue management, Story validation, Srpint scope e testing validation.;;Projects
+Event Subscription component;Innovation;Matarazzo Silvia;01/06/25;28/07/25;Completed;Medium;No;4;Brief, design validation, Sprint planning, UAT validation;;Projects
+PSW reset revamp;Innovation;Matarazzo Silvia;01/04/25;28/07/25;Completed;Medium;No;4;Brief, design validation, Sprint planning, UAT validation;;Projects
+Watch PDP rework;Product Detail Page;Matarazzo Silvia;01/04/25;30/03/25;In Progress;High;No;100;Backlog review, Benchmark, CRO Analysis, Brief design, product life cycle review, retroplanning, Sprint definition, Testing Coordination, Authoring mapping tasks;;Projects
+Virtual Try On - POC;Innovation;Pastore Giuseppe ;10/01/24;31/08/25;In Progress;Medium;Yes;160;legal + RIC R&I + CyberSec + Privacy + Devs + Provider + Product Team + Digital team;;Projects
+3D assets creation PAM01783;Innovation;Pastore Giuseppe ;10/01/24;31/08/25;In Progress;High;No;8;SOW + files + fine tuning;;Projects
+ABtasty - POC;AB Testing;Pastore Giuseppe ;10/01/24;31/08/25;In Progress;Medium;Yes;60;;;Projects
+Google Maps API fix;Network Management;Pastore Giuseppe ;10/01/24;31/07/25;In Progress;Medium;Yes;2;;;Projects
+Testing Automation;Testing Automation;Pastore Giuseppe ;01/04/25;01/08/25;In Progress;Medium;No;12;;;Projects
+Boutique detail page revamp;Network Page;Pastore Giuseppe ;20/02/25;30/09/25;In Progress;High;No;4;;;Projects
+Beyond the Watch new editorial components;UX/UI/CRO;Pastore Giuseppe ;01/04/25;29/07/25;In Progress;Medium;No;4;;;Projects
+Florence Exhibition Editorial Ecosystem;UX/UI/CRO;Pastore Giuseppe ;02/04/25;11/07/25;In Progress;High;No;4;;;Projects
+PDP redesign;Product Detail Page;Pastore Giuseppe ;02/04/25;31/01/26;In Progress;High;No;10;;;Projects
+Private Area Front-end Implementation;Innovation;Pastore Giuseppe ;01/04/25;30/09/25;In Progress;High;No;2;;;Projects
+Strap Hub page review;UX/UI/CRO;Pastore Giuseppe ;01/04/25;30/09/25;In Progress;Medium;No;4;;;Projects
+Mechanic Finalization PAM01783;E-com exclusives;Scola Federica;15/05/25;14/07/25;In Progress;High;No;120;;;Projects
+Florence Exhibition Activation;Content / Editorial;Scola Federica;30/06/25;01/08/25;In Progress;High;No;40;;;Projects
+Biceps Revamp;E-Pos;Scola Federica;15/06/25;15/07/25;In Progress;High;No;20;;;Projects
+EPOS Assesment of current status;E-Pos;Scola Federica;;;To Start;High;;80;;;Projects
+Trafalgar;E-Pos;Scola Federica;15/06/25;;To Start;Medium;;4;;;Projects
+SIAR Mexico;Content / Editorial;Scola Federica;01/06/25;14/10/25;In Progress;Medium;No;20;;;Projects
+EPOS Evaluation Form;E-Pos;Scola Federica;01/07/25;01/10/25;In Progress;High;No;20;;;Projects
+BIS Check & Market sollicitation;E-Business Performance;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;200;;;Projects
+Biceps Activation - UAE;E-Pos;Scola Federica;24/06/25;01/08/25;In Progress;High;No;6;;;Projects
+PDay US ;Content / Editorial;Scola Federica;14/07/25;10/10/25;In Progress;Medium;No;30;;;Projects
+Revolution Project;Content / Editorial;Scola Federica;01/07/25;24/11/25;In Progress;Medium;No;20;;;Projects
+Private Area Alligment;E-com exclusives;Scola Federica;01/07/25;15/10/25;In Progress;High;No;40;;;Projects
+Heritage exhibition -Cloud page allignement  ;Heritage;Scola Federica;30/06/25;01/08/25;In Progress;High;No;4;;;Projects
+Biceps Translation | Arabic, Portuguese;E-Pos;Scola Federica;10/07/25;30/07/25;In Progress;Medium;No;8;;;Projects
+Early Acess;E-Business;Scola Federica;01/04/25;31/05/25;Completed;High;no;160;;;Projects
+W&W FY26;Content / Editorial;Scola Federica;01/04/25;08/04/25;Completed;High;no;300;;;Projects
+Private Area - request;Content / Editorial;Scola Federica;01/04/25;08/04/25;In Progress;High;no;40;;;Projects
+Collector's Corner;Content / Editorial;Scola Federica;01/02/25;15/6/2025;In Progress;Low;No;20;;;Projects
+Beyond the Watch - Strategy & Brief;Content / Editorial;Scola Federica;01/04/25;12/01/25;Completed;Medium;No;40; ;;Projects
+Strap hub - strategy & brief;Content / Editorial;Scola Federica;01/04/25;30/04/25;Completed;High;No;10; ;;Projects
+Beyond the Watch - update;Content / Editorial;Scola Federica;12/01/25;;In Progress;High;No;20; ;;Projects
+Eiliean editorial  - stategy & brief;Content / Editorial;Scola Federica;15/04/25;30/05/25;Completed;High;No;5; ;;Projects
+Marina militare  - stategy & brief;Content / Editorial;Scola Federica;15/02/25;03/07/25;Completed;High;No;10; ;;Projects
+Luna Rossa PArtnership  - stategy & brief;Content / Editorial;Scola Federica;14/04/25;03/07/25;Completed;High;No;12; ;;Projects
+Luna Rossa Campagin  - stategy & brief;Content / Editorial;Scola Federica;14/04/25;03/07/25;Completed;Medium;no;12;;;Projects
+scarcity | E-business proposal;E-Pos;Scola Federica;01/02/25;01/04/25;Completed;Medium;No;12;;;Projects
+W&W  dashboard check;E-Business Performance;Scola Federica;01/03/25;01/04/25;Completed;Medium;No;8;;;Projects
+MDW - Allignement ;Content / Editorial;Scola Federica;01/02/25;15/04/25;Completed;Medium;No;24;;;Projects
+MDW - news ;Content / Editorial;Scola Federica;01/02/25;15/04/25;Completed;Medium;No;4;;;Projects
+MDW - Platform ;Content / Editorial;Scola Federica;01/02/25;15/04/25;Completed;Medium;No;12;;;Projects
+W&W runner Alligment;Training;Scola Federica;01/03/25;08/04/25;Completed;Medium;No;4;;;Projects
+Experience Saga;Content / Editorial;Scola Federica;01/01/25;30/09/25;In Progress;Medium;No;60;;;Projects
+FY26 - Content strategy;Content / Editorial;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;40;;;Projects
+BU26 E-business landing review;E-Business Performance;Tilenni Dianni Maria Luisa;04/04/25;30/06/25;Completed;High;No;8;;;Projects
+Monday.com adoption;Processes;Tilenni Dianni Maria Luisa;05/04/25;30/12/25;In Review;Medium;Yes;8;;;Projects
+E-business | MSR Preparation ;E-Business Performance;Tilenni Dianni Maria Luisa;01/09/25;13/11/25;To Start;High;No;50;;;Projects
+LE09 landing ;E-Business Performance;Tilenni Dianni Maria Luisa;01/07/25;30/07/25;In Progress;High;Yes;16;;;Projects
+BU27 E-business forecast;E-Business Performance;Tilenni Dianni Maria Luisa;01/09/25;1t5 set;To Start;High;Yes;16;;;Projects
+Group Platform | Annual Strategic Sharing Session preparation;Strategy & Governance;Tilenni Dianni Maria Luisa;01/09/25;30/09/25;To Start;High;Yes;40;Including 2 preliminary + EP sharing session;;Projects
+PLC Analysis and Destruction  ;Finance;Tilenni Dianni Maria Luisa;05/06/25;03/07/25;Completed;Medium;No;16;;;Projects
+Scarcity | E-business rules integrations;Strategy & Governance;Tilenni Dianni Maria Luisa;07/05/25;30/05/25;Completed;High;No;24;;;Projects
+Bronzo Task Force;External driven streams ;Tilenni Dianni Maria Luisa;06/06/25;12/06/25;Completed;Medium;No;8;;;Projects
+E-business Guidelines;Strategy & Governance;Tilenni Dianni Maria Luisa;01/09/25;30/09/25;To Start;High;No;40;;;Projects
+Boutiques Commission scheme revamp | Integration of Ecom assortment via Extend;Strategy & Governance;Tilenni Dianni Maria Luisa;20/05/25;17/07/25;Completed;High;No;5;;;Projects
+Lighthouse Project;External driven streams ;Tilenni Dianni Maria Luisa;12/05/25;20/05/25;Completed;Medium;No;8;;;Projects
+Annual Group Platforms Strategy & Roadmap;Ceremonies;Tilenni Dianni Maria Luisa;01/01/26;30/01/26;To Start;High;Yes;25;;;Projects
+HQ / local digital and e-business review | UAE;Local Digital Reviews;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | MX;Local Digital Reviews;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | BR;Local Digital Reviews;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+PAN-Biceps Monthly Catch Up;E-Pos;Scola Federica;01/04/25;30/03/26;In Progress;High;No;1;;Richemont;Swimlane
+Heritage exhibition - Amplification plan;Heritage;Scola Federica;17/06/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+Heritage exhibition - Florence;Content / Editorial;Scola Federica;01/07/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+Heritage exhibition - NY;Content / Editorial;Scola Federica;01/07/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+Heritage exhibition - SH;Content / Editorial;Scola Federica;01/07/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+SAP Activation and Rx Releases;Tech Development;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;Yes;4;Rx releases, QAD preparation, QAD;Richemont;Swimlane
+SAP Activation and Rx Releases;Release Management;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;Yes;8;Rx releases, GANTT ;Multiples;Swimlane
+Provider Scouting;Innovation;Guarda Alessandro;01/04/25;30/03/26;In Progress;Medium;No;8;For Testing Automation, Personalization, AB test, 3D, Virtual Tour, monitoring etc;Multiples;Swimlane
+Suppliers Costs Control;Procurement;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;No;8;Immmedia, CtrlQS;Internal (PAN);Swimlane
+Contribution to Strategic meetings ;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;12;eg PAM01783, digital calendar, AB Tasty POC, VTO etc;Internal (PAN);Swimlane
+PAN Data commitee;Ceremonies;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;0,5;;Other Departments (PAN);Swimlane
+RIC Evolutions and Projects alignments;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;High;Yes;5;QBR, BRW, QAD, AEM6 club, BRM, call with other Product Owners;Richemont;Swimlane
+Planning and Prioritization;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;30;Sprint Planning, Backlog Refinement, Demo Session, QBR, Retrospectives;AKQA;Swimlane
+Commercial Excellence;Strategy & Governance;Tilenni Dianni Maria Luisa;01/06/25;30/03/26;In Progress;High;No;1;;Other Departments (PAN);Swimlane
+HQ / local digital and e-business review | BR;Local Digital Reviews;Scola Federica;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | BR;Local Digital Reviews;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+Planning and Prioritization;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;6;Weekly alignments, Wishlist;IMMEDIA;Swimlane
+Planning and Prioritization;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;6;Weekly alignments, Wishlist;CtrlQS;Swimlane
+Progress Update;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;20;PMM, One to One, Weekly Team Sync, Team Cerimonies;Internal (PAN);Swimlane
+Knowledge Share;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;Yes;4;BRM, AEM6 Club;Richemont;Swimlane
+Data Connect;Ceremonies;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;Yes;0,5;;Richemont;Swimlane
+Backlog management;Processes;Guarda Alessandro;01/04/25;30/03/26;In Progress;;No;8;Dashboard maintenance, ;Internal (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+P&L QBR;E-Business Performance;Tilenni Dianni Maria Luisa;01/10/25;30/03/26;To Start;Medium;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | US;Local Digital Reviews;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;2;;Markets (PAN);Swimlane
+US Task Force;External driven streams ;Tilenni Dianni Maria Luisa;01/06/25;30/03/26;In Progress;High;No;4;;Markets (PAN);Swimlane
+Bugs analysis and fixing;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;4;Perform in-depth bug analysis to identify root causes and implement corrective actions;Internal (PAN);Swimlane
+PAN Deployments;Release Management;Manduci Valentina;01/04/25;30/03/26;In Progress; ;Yes;8;Cutover review, contnt packages creation, authoring tasks, testing features --> time spent can change depending on release scope;Internal (PAN);Swimlane
+Knowledge Sessions with GroupTech RIC experts;Training;Manduci Valentina;01/04/25;30/03/26;In Progress;High;Yes;4;Trained bi-monthly by Richemont GroupTech experts on backend and frontend applications.;Internal (PAN);Swimlane
+PAN Digital Catalog Manteinance;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;1;Maintaining the catalog and establishing automated processes to minimize the impact;Internal (PAN);Swimlane
+Monitoring SAP/ SWSE PAN logs;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;1;Monitoring SSE and SAP SPP logs to ensure proper stock and flag integration on DMS and AEM6.;Internal (PAN);Swimlane
+WebConfig file manteinance ;Tech Development;Manduci Valentina;01/04/25;30/03/26;In Progress;;No;8;Bug fixing - cleaning and writing of redirection rules - deployment plan & coordination;Internal (PAN);Swimlane
+Monitoring and update of Elastic Search queries for pan.com;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress;;No;1;;Internal (PAN);Swimlane
+Web Performances;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress;;No;3;Report analysis , meeting with RIC, documentation manteinance;Internal (PAN);Swimlane
+OCP Support to internal colleagues;OCP;Manduci Valentina;01/04/25;30/03/26;In Progress;;No;2;Support to questions or issues on OCP platform to internal PAN colleagues;Internal (PAN);Swimlane
+Creation of new boutiques in network;Network Management;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;0,5; ;Internal (PAN);Swimlane
+Verification and alignment of boutiques in Google with g-experts;Network Management;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;0,5; ;Internal (PAN);Swimlane
+Review accessibilty with Level Access;Accessibility ;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;4; ;Level Access;Swimlane
+AKQA Ceremonies;Tech Development;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;2; ;AKQA;Swimlane
+OCP;OCP;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;Yes;5;Design Solution workshop, QBR, Steerco;Richemont;Swimlane
+General authoring tasks;Content / Editorial;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;2;News articles, maintanance of legal and services pages;IMMEDIA;Swimlane
+Omnichannel improvements (TBC);E-Business;Matarazzo Silvia;01/10/25;30/03/26;To Start;High;No;16;RDV, BIS, BSAD, Livechat;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Accruals;Finance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;Yes;2;;Other Departments (PAN);Swimlane
+Banner RP;E-Pos;Scola Federica;01/04/25;30/03/26;In Progress;Low;No;8;;Other Departments (PAN);Swimlane
+JIRA Management;Processes;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;2;;Mercati;Swimlane
+E-business improvement roadmap;E-Business;Pastore Giuseppe ;01/09/25;30/03/26;To Start;High;No;16;;Internal (PAN);Swimlane
+DDC;Data;New Intern;30/09/25;30/03/26;Blocked;Low;No;3;;Markets (PAN);Swimlane
+Editorial Calendar planning and catch up;Content / Editorial;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;10;;Other Departments (PAN);Swimlane
+E-business Forecast;E-Business;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;4;;Markets (PAN);Swimlane
+Good Receipt;Finance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;Yes;1;;Other Departments (PAN);Swimlane
+HQ / local digital and e-business review | UAE;Local Digital Reviews;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;Medium;No;1;;US;Swimlane
+BTW reportage;Content / Editorial;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;2;;Other Departments (PAN);Swimlane
+Joint Digital Calendar;Processes;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;4;;Internal (PAN);Swimlane
+Knowledge Share;Ceremonies;Manduci Valentina;01/04/25;30/03/26;In Progress;High;Yes;3;BRM, AEM6 Club;Richemont;Swimlane
+Planning and Prioritization;Ceremonies;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;30;Sprint Planning, Backlog Refinement, Demo Session, QBR, Retrospectives;AKQA;Swimlane
+Progress Update;Ceremonies;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;16;PMM, One to One;Internal (PAN);Swimlane
+Monitoring AEM6;Tech Maintenance;Manduci Valentina;01/04/25;30/03/26;In Progress; ;No;2;Logs cleaning and monitoring, Web manteinance;Internal (PAN);Swimlane
+Dept Budgeting and reviews;Finance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;;4;;Internal (PAN);Swimlane
+SEO roadmap;SEO;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;4;;Internal (PAN);Swimlane
+AB test roadmap;AB Testing;Pastore Giuseppe ;01/06/25;30/03/26;To Start;High;No;4;;Internal (PAN);Swimlane
+Budget management;Procurement;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;4;;Internal (PAN);Swimlane
+Providers Selection;Procurement;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;30;;External;Swimlane
+Team management;Processes;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;20;;Internal (PAN);Swimlane
+Contribution to open Projects;Processes;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;20;;Other Departments (PAN);Swimlane
+Update existing boutiqes;Network Management;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;1; ;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Manduci Valentina;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Matarazzo Silvia;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Scola Federica;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Weekly Team Sync;Strategy & Governance;Matarazzo Silvia;01/09/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Bi-weekly Middle Management;Ceremonies;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;Medium;No;2;;Other Departments (PAN);Swimlane
+Onboarding for Ginevra;Training;Matarazzo Silvia;01/09/25;11/01/26;To Start;High;No;4;Silvia | Ginevra;Internal (PAN);Swimlane
+PAN Deployments;Release Management;Matarazzo Silvia;01/04/25;30/03/26;In Progress; ;Yes;4;Review release plan, testing organization, release scope;Internal (PAN);Swimlane
+PAN Digital Catalog Supervising;Processes;Matarazzo Silvia;01/04/25;30/03/26;In Progress; ;No;2;Check product launches calendars, keep products activation/deactivation process smoth, quesrie/labels/filters monitoring;Internal (PAN);Swimlane
+Planning and Prioritization;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;;No;26;Sprint Planning, Backlog Refinement, Demo Session, QBR, Retrospectives;AKQA;Swimlane
+Planning and Prioritization;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;;No;1;Monthly alignments;CtrlQS;Swimlane
+Quarterly Technology Forum ;Ceremonies;Tilenni Dianni Maria Luisa;15/07/25;30/03/26;In Progress;Medium;Yes;10;;Richemont;Swimlane
+Weekly Team Sync;Strategy & Governance;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;No;2;;Internal (PAN);Swimlane
+Bi-weekly Middle Management;Ceremonies;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;Medium;No;2;;Other Departments (PAN);Swimlane
+Commercial Excellence;Strategy & Governance;Pastore Giuseppe ;01/06/25;30/03/26;In Progress;High;No;1;;Other Departments (PAN);Swimlane
+Brand Managers Monthly Catch-up;Strategy & Governance;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Manduci Valentina;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Guarda Alessandro;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Carrozzo Ginevra;01/09/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Carrozzo Ginevra;01/09/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Innovation roadmap;Innovation;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;4;;Internal (PAN);Swimlane
+Meetings requested by other Depts;External driven streams ;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+Trainings / Workshops / Conferences;Training;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;6;;External;Swimlane
+UX/UI/Design;Tech Development;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;6;;Internal (PAN);Swimlane
+French Class;Training;Guarda Alessandro;01/04/25;30/03/26;In Progress;Medium;No;6;;Internal (PAN);Swimlane
+Provider Scouting;Innovation;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;4;Interviews new suppliers, brief definition;Multiples;Swimlane
+Suppliers Alignment;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;4;PMM;Multiples;Swimlane
+Meeting on MKG/CRM initiatives;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium; ;4;Meeting organized with Mkg, Retail, CRM ;Internal (PAN);Swimlane
+French Class;Training;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;6; ;External;Swimlane
+HR Training (SMP);Training;Matarazzo Silvia;10/02/26;30/03/26;To Start;High; ;50;SMP;External;Swimlane
+One to One;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;12;Weekly alignment on priorities, tasks and projects updates with Vale/Ale/Chiara.;Internal (PAN);Swimlane
+Projects Monthly update;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;4;Review retroplanning to fit all the due dates (Giuse/Nanna/Vale/Ale).;Internal (PAN);Swimlane
+Jira tickets backlog and prioritization review;Processes;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;no;15;;Internal (PAN);Swimlane
+Laboratorio di Idee;External driven streams ;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;Low;No;1;;Other Departments (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Manduci Valentina;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Matarazzo Silvia;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+Joint Digital Calendar;Ceremonies;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;Medium;No;2;;Internal (PAN);Swimlane
+One to One;Ceremonies;Galelli Davide Andrea;01/04/25;30/03/26;In Progress;Medium;No;12;Davide | Mari;Internal (PAN);Swimlane
+One to One;Ceremonies;Scola Federica;01/04/25;30/03/26;In Progress;Medium;No;12;Fede | Mari;Internal (PAN);Swimlane
+One to One;Ceremonies;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;Medium;No;12;Mari | Giuse, Davide, Fede;Internal (PAN);Swimlane
+One to One;Ceremonies;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;Medium;No;12;Giuse | Silvia, Nanna, Ginevra;Internal (PAN);Swimlane
+One to One;Ceremonies;Guarda Alessandro;01/04/25;30/03/26;In Progress;Medium;No;12;Ale | Giuse;Internal (PAN);Swimlane
+One to One;Ceremonies;Hoegsholt Nanna;01/04/25;30/03/26;In Progress;Medium;No;12;Nanna | Giuse;Internal (PAN);Swimlane
+One to One;Ceremonies;Carrozzo Ginevra;01/09/25;30/03/26;In Progress;Medium;No;3;Ginevra | Giuse;Internal (PAN);Swimlane
+One to One;Ceremonies;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;Medium;No;6;Giuse | Mari;Internal (PAN);Swimlane
+Laboratorio di Idee;External driven streams ;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;Low;No;1;;Other Departments (PAN);Swimlane
+HQ / local digital and e-business review | US;Local Digital Reviews;Pastore Giuseppe ;15/09/25;30/03/26;In Progress;High;No;2;;Markets (PAN);Swimlane
+Onboarding for Ginevra;Training;Pastore Giuseppe ;28/07/25;30/03/26;To Start;High;No;16;Ginevra | Giuse;Internal (PAN);Swimlane
+Onboarding for Ginevra;Training;Carrozzo Ginevra;28/07/25;30/03/26;In Progress;High;No;16;Ginevra | Giuse;Internal (PAN);Swimlane
+HQ / local digital and e-business review | UAE;Local Digital Reviews;Scola Federica;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+Meetings with RIC;Tech Development;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;10;;Richemont;Swimlane
+Weekly Commercial Team Meeting;;;01/04/25;30/03/26;In Progress;;;;;Other Departments (PAN);Swimlane
+HQ / local digital and e-business review | MX;Local Digital Reviews;Scola Federica;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | MX;Local Digital Reviews;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | MX;Local Digital Reviews;Manduci Valentina;01/04/25;30/03/26;In Progress;High;No;1;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | US;Local Digital Reviews;Scola Federica;01/04/25;30/03/26;In Progress;High;No;2;;Markets (PAN);Swimlane
+HQ / local digital and e-business review | US;Local Digital Reviews;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;High;No;2;;Markets (PAN);Swimlane
+Laboratorio di Idee;External driven streams ;Scola Federica;01/04/25;30/03/26;In Progress;Low;No;1;;Other Departments (PAN);Swimlane
+Laboratorio di Idee;External driven streams ;Tilenni Dianni Maria Luisa;01/04/25;30/03/26;In Progress;Low;No;1;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Scola Federica;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Pastore Giuseppe ;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+HQ Commercial Monthly Catch up;Strategy & Governance;Matarazzo Silvia;01/04/25;30/03/26;In Progress;High;No;4;;Other Departments (PAN);Swimlane
+OCP Support to internal colleagues;OCP;Matarazzo Silvia;01/04/25;30/03/26;In Progress;;No;2;Support in case of critical issues, escalations, knoledge sharing;Internal (PAN);Swimlane
