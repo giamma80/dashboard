@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, Upload, Download, Calendar, User, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart } from 'recharts';
+import { Users, Upload, Download, Calendar, User, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X, ChevronDown } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart, Line } from 'recharts';
 import DownloadSection from './DownloadSection';
 
 // Tipi per i nuovi dati
@@ -131,8 +131,53 @@ const Dashboard = () => {
   });
   const [selectedTeamMember, setSelectedTeamMember] = useState<string>('');
   
+  // State per la card dettagliata del membro
+  const [selectedMemberForCard, setSelectedMemberForCard] = useState<string>('');
+  
+  // State per l'ordinamento della tabella membri
+  const [membersSortColumn, setMembersSortColumn] = useState<string>('');
+  const [membersSortDirection, setMembersSortDirection] = useState<'asc' | 'desc'>('asc');
+  
   // State per il modale download
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  
+  // State per l'accordion del Gantt
+  const [isGanttExpanded, setIsGanttExpanded] = useState(false);
+  
+  // State per il filtro quarter
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
+
+  // Funzioni helper per i quarter
+  const getQuarterOptions = () => {
+    return [
+      { value: '', label: 'Anno completo' },
+      { value: '2025-Q1', label: 'Q1 2025 (Apr-Giu)' },
+      { value: '2025-Q2', label: 'Q2 2025 (Lug-Set)' },
+      { value: '2025-Q3', label: 'Q3 2025 (Ott-Dic)' },
+      { value: '2025-Q4', label: 'Q4 2025 (Gen-Mar 2026)' },
+    ];
+  };
+
+  const getQuarterDateRange = (quarter: string) => {
+    switch (quarter) {
+      case '2025-Q1':
+        return { start: '2025-04-01', end: '2025-06-30' };
+      case '2025-Q2':
+        return { start: '2025-07-01', end: '2025-09-30' };
+      case '2025-Q3':
+        return { start: '2025-10-01', end: '2025-12-31' };
+      case '2025-Q4':
+        return { start: '2026-01-01', end: '2026-03-31' };
+      default:
+        return { start: '2025-04-01', end: '2026-03-31' };
+    }
+  };
+
+  const handleQuarterChange = (quarter: string) => {
+    setSelectedQuarter(quarter);
+    const dateRange = getQuarterDateRange(quarter);
+    setDateRange(dateRange);
+  };
 
   // Dati vuoti di default
   const emptyData: DashboardData = {
@@ -771,6 +816,7 @@ const Dashboard = () => {
         end: '2026-03-31'
       });
       setSelectedTeamMember('');
+      setSelectedQuarter('');
     };
 
     return (
@@ -789,14 +835,20 @@ const Dashboard = () => {
               <input
                 type="date"
                 value={dateRange.start}
-                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                onChange={(e) => {
+                  setDateRange(prev => ({ ...prev, start: e.target.value }));
+                  setSelectedQuarter(''); // Reset quarter quando si cambia data manualmente
+                }}
                 className="text-sm border border-gray-300 rounded px-2 py-1"
               />
               <label className="text-sm text-gray-600">Al:</label>
               <input
                 type="date"
                 value={dateRange.end}
-                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                onChange={(e) => {
+                  setDateRange(prev => ({ ...prev, end: e.target.value }));
+                  setSelectedQuarter(''); // Reset quarter quando si cambia data manualmente
+                }}
                 className="text-sm border border-gray-300 rounded px-2 py-1"
               />
               {isMonthFilter() && (
@@ -811,6 +863,28 @@ const Dashboard = () => {
                     Mostra tutto
                   </button>
                 </div>
+              )}
+            </div>
+            
+            {/* Filtro quarter */}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <label className="text-sm text-gray-600">Quarter:</label>
+              <select
+                value={selectedQuarter}
+                onChange={(e) => handleQuarterChange(e.target.value)}
+                className="text-sm border border-gray-300 rounded px-2 py-1 min-w-[160px]"
+              >
+                {getQuarterOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {selectedQuarter && (
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  📊 Quarter selezionato
+                </span>
               )}
             </div>
             
@@ -842,7 +916,7 @@ const Dashboard = () => {
           </div>
 
           {/* Bottone Pulisci tutti i filtri */}
-          {(selectedTeamMember || isMonthFilter()) && (
+          {(selectedTeamMember || selectedQuarter || isMonthFilter()) && (
             <button
               onClick={clearAllFilters}
               className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors border border-gray-300"
@@ -852,6 +926,376 @@ const Dashboard = () => {
             </button>
           )}
         </div>
+      </div>
+    );
+  };
+
+  // Componente per la sezione membri del team
+  const TeamMembersSection = () => {
+    const getStatusInfo = (workPressure: number) => {
+      if (workPressure > 100) {
+        return { status: 'Sovraccarico', color: 'text-red-600', bgColor: 'bg-red-100', dotColor: 'bg-red-500' };
+      } else if (workPressure > 80) {
+        return { status: 'Occupato', color: 'text-yellow-600', bgColor: 'bg-yellow-100', dotColor: 'bg-yellow-500' };
+      } else {
+        return { status: 'Disponibile', color: 'text-green-600', bgColor: 'bg-green-100', dotColor: 'bg-green-500' };
+      }
+    };
+
+    const handleMemberCardClick = (memberName: string) => {
+      if (selectedMemberForCard === memberName) {
+        // Se clicco di nuovo sulla stessa card, aggiorno la dashboard (applico filtro)
+        setSelectedTeamMember(memberName);
+        setSelectedMemberForCard('');
+      } else {
+        // Apro la card del membro
+        setSelectedMemberForCard(memberName);
+      }
+    };
+
+    // Funzione per gestire l'ordinamento - usa lo stato globale
+    const handleSort = (column: string) => {
+      if (membersSortColumn === column) {
+        // Se è la stessa colonna, cambia direzione
+        setMembersSortDirection(membersSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        // Se è una nuova colonna, imposta ascendente
+        setMembersSortColumn(column);
+        setMembersSortDirection('asc');
+      }
+    };
+
+    // Applica i filtri globali ai membri del team
+    const filteredMembers = dashboardData?.teamMembers.filter(member => {
+      // Se c'è un filtro membro attivo, mostra solo quel membro
+      if (selectedTeamMember && selectedTeamMember.trim() !== '') {
+        return member.name === selectedTeamMember;
+      }
+      // Altrimenti mostra tutti i membri (potrebbero essere già filtrati per data)
+      return true;
+    }) || [];
+
+    // Applica l'ordinamento - usa lo stato globale
+    const sortedMembers = [...filteredMembers].sort((a, b) => {
+      if (!membersSortColumn) return 0;
+
+      let aValue: any, bValue: any;
+
+      switch (membersSortColumn) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'status':
+          aValue = a.workPressure;
+          bValue = b.workPressure;
+          break;
+        case 'workPressure':
+          aValue = a.workPressure;
+          bValue = b.workPressure;
+          break;
+        case 'totalProjects':
+          aValue = a.totalProjects;
+          bValue = b.totalProjects;
+          break;
+        case 'totalHours':
+          aValue = a.totalHours;
+          bValue = b.totalHours;
+          break;
+        case 'mainStream':
+          aValue = a.streams.length > 0 ? a.streams[0].stream.toLowerCase() : '';
+          bValue = b.streams.length > 0 ? b.streams[0].stream.toLowerCase() : '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return membersSortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return membersSortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    const selectedMember = sortedMembers.find(m => m.name === selectedMemberForCard);
+
+    // Componente per le intestazioni ordinabili - usa lo stato globale
+    const SortableHeader = ({ column, children }: { column: string; children: React.ReactNode }) => (
+      <th 
+        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+        onClick={() => handleSort(column)}
+      >
+        <div className="flex items-center justify-between">
+          <span>{children}</span>
+          <div className="flex flex-col ml-1">
+            <svg 
+              className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'asc' ? 'text-blue-600' : 'text-gray-300'}`}
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            <svg 
+              className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'desc' ? 'text-blue-600' : 'text-gray-300'}`}
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </th>
+    );
+
+    return (
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Users className="w-5 h-5 text-purple-500" />
+          Membri del Team
+          {selectedTeamMember && (
+            <span className="text-sm text-gray-500 ml-2">
+              (Filtrato: {selectedTeamMember})
+            </span>
+          )}
+        </h3>
+
+        {filteredMembers.length === 0 ? (
+          // Messaggio quando non ci sono membri da mostrare
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 mb-2">Nessun membro trovato</h4>
+            <p className="text-gray-600 text-sm">
+              {selectedTeamMember 
+                ? `Nessun dato disponibile per ${selectedTeamMember} nel periodo selezionato.`
+                : 'Nessun membro del team ha progetti nel periodo selezionato.'
+              }
+            </p>
+            {selectedTeamMember && (
+              <button
+                onClick={() => setSelectedTeamMember('')}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                Mostra tutti i membri
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Vista tabella */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <SortableHeader column="name">Nome</SortableHeader>
+                      <SortableHeader column="status">Status</SortableHeader>
+                      <SortableHeader column="workPressure">Carico</SortableHeader>
+                      <SortableHeader column="totalProjects">Progetti</SortableHeader>
+                      <SortableHeader column="totalHours">Ore Totali</SortableHeader>
+                      <SortableHeader column="mainStream">Stream Principale</SortableHeader>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedMembers.map((member) => {
+                      const statusInfo = getStatusInfo(member.workPressure);
+                      return (
+                        <tr 
+                          key={member.name}
+                          onClick={() => setSelectedMemberForCard(member.name)}
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                                <div className="text-sm text-gray-500">Senior Developer</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}>
+                              <div className={`w-2 h-2 ${statusInfo.dotColor} rounded-full mr-1.5`}></div>
+                              {statusInfo.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <span className={`font-medium ${statusInfo.color}`}>
+                                {Math.round(member.workPressure)}%
+                              </span>
+                              <div className="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${
+                                    member.workPressure > 100 ? 'bg-red-500' : 
+                                    member.workPressure > 80 ? 'bg-yellow-500' : 'bg-green-500'
+                                  }`}
+                                  style={{ width: `${Math.min(member.workPressure, 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {member.totalProjects}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {member.totalHours}h
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {member.streams.length > 0 ? (
+                              <div className="flex items-center">
+                                <div 
+                                  className="w-3 h-3 rounded-full mr-2" 
+                                  style={{ backgroundColor: member.streams[0].color }}
+                                ></div>
+                                <span className="truncate max-w-[120px]">{member.streams[0].stream}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Nessuno stream</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Pannello laterale scorrevole per i dettagli */}
+        {selectedMemberForCard && selectedMember && (
+          <>
+            {/* Overlay semi-trasparente */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+              onClick={() => setSelectedMemberForCard('')}
+              style={{ top: 0, left: 0 }}
+            />
+            
+            {/* Pannello scorrevole da destra */}
+            <div 
+              className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto ${
+                selectedMemberForCard ? 'translate-x-0' : 'translate-x-full'
+              }`}
+            >
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h4 className="text-2xl font-bold text-gray-900">Dettagli Membro</h4>
+                  <button
+                    onClick={() => setSelectedMemberForCard('')}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Header con avatar e info base */}
+                  <div className="flex items-center gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-bold text-gray-900 text-2xl mb-2">{selectedMember.name}</h5>
+                      <div className="text-sm text-gray-600 mb-4">Senior Developer</div>
+                      <div className="flex items-center gap-6 text-sm text-gray-700">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                          <span className="font-medium">{selectedMember.totalProjects} progetti</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="font-medium">{selectedMember.totalHours}h totali</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gauge del carico di lavoro */}
+                  <div className="bg-gray-50 rounded-xl p-8">
+                    <div className="text-center mb-4">
+                      <h6 className="text-lg font-semibold text-gray-800">Carico di Lavoro</h6>
+                    </div>
+                    <div className="flex justify-center">
+                      <WorkPressureGauge
+                        value={selectedMember.workPressure}
+                        maxValue={150}
+                        size={200}
+                        title=""
+                      />
+                    </div>
+                  </div>
+
+                  {/* Statistiche rapide */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-6 rounded-xl text-center">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {Math.round(selectedMember.totalHours / selectedMember.totalProjects)}h
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">Media per Progetto</div>
+                    </div>
+                    <div className="bg-purple-50 p-6 rounded-xl text-center">
+                      <div className="text-3xl font-bold text-purple-600 mb-2">
+                        {selectedMember.streams.length}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">Stream Attivi</div>
+                    </div>
+                  </div>
+
+                  {/* Distribuzione stream dettagliata */}
+                  <div className="space-y-4">
+                    <h6 className="text-lg font-semibold text-gray-800">Distribuzione Stream</h6>
+                    <div className="space-y-3">
+                      {selectedMember.streams.map((stream, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                          <div className="flex items-center gap-4">
+                            <div 
+                              className="w-5 h-5 rounded-full shadow-sm" 
+                              style={{ backgroundColor: stream.color }}
+                            ></div>
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">{stream.stream}</span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {stream.projects} progett{stream.projects === 1 ? 'o' : 'i'} • {stream.hours} ore
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-gray-900">{stream.hours}h</div>
+                            <div className="text-xs text-gray-500">{stream.projects}p</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottoni di azione */}
+                  <div className="flex gap-4 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => handleMemberCardClick(selectedMember.name)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Filter className="w-4 h-4" />
+                      Applica Filtro Dashboard
+                    </button>
+                    <button
+                      onClick={() => setSelectedMemberForCard('')}
+                      className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                    >
+                      Chiudi
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   };
@@ -941,19 +1385,47 @@ const Dashboard = () => {
                 
                 {/* Statistiche Base */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="text-center">
+                  <div className="text-center bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                    </div>
                     <div className="text-2xl font-bold text-blue-600">{dashboardData.totalTeamProjects}</div>
                     <div className="text-sm text-gray-600">Progetti Totali</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-green-50 rounded-lg p-4 border border-green-100">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
                     <div className="text-2xl font-bold text-green-600">{dashboardData.totalTeamHours}</div>
                     <div className="text-sm text-gray-600">Ore Totali</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                    </div>
                     <div className="text-2xl font-bold text-purple-600">{dashboardData.teamMembers.length}</div>
                     <div className="text-sm text-gray-600">Membri Team</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-orange-50 rounded-lg p-4 border border-orange-100">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                    </div>
                     <div className="text-2xl font-bold text-orange-600">{dashboardData.streamDistribution.length}</div>
                     <div className="text-sm text-gray-600">Stream Attivi</div>
                   </div>
@@ -1083,7 +1555,150 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Riga 2: Timeline ore per stream */}
+            {/* Riga 2: Gantt Chart degli Stream */}
+            <div className="bg-white rounded-lg shadow-md">
+              {/* Header cliccabile */}
+              <div 
+                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors select-none"
+                onClick={() => setIsGanttExpanded(!isGanttExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-indigo-500" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Gantt Chart degli Stream
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      (Timeline di attività per stream)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">
+                      {isGanttExpanded ? 'Nascondi' : 'Mostra'}
+                    </span>
+                    <ChevronDown 
+                      className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                        isGanttExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Contenuto espandibile */}
+              {isGanttExpanded && (
+                <div className="px-6 pb-6 border-t border-gray-100">
+                  {/* Gantt Chart Container */}
+                  <div className="overflow-x-auto mt-4">
+                    <div className="min-w-full">
+                      {/* Header con i mesi */}
+                      <div className="flex border-b border-gray-200 mb-4">
+                        <div className="w-48 py-2 px-4 font-medium text-gray-700 bg-gray-50">
+                          Stream
+                        </div>
+                        <div className="flex-1 flex">
+                          {dashboardData.timeline.map((month, index) => (
+                            <div 
+                              key={index} 
+                              className="flex-1 min-w-20 py-2 px-2 text-xs font-medium text-gray-600 text-center bg-gray-50 border-l border-gray-200"
+                            >
+                              {month.month}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Stream Rows */}
+                      <div className="space-y-2">
+                        {dashboardData.streamDistribution
+                          .sort((a, b) => b.hours - a.hours)
+                          .map((stream, streamIndex) => {
+                            // Calcola in quali mesi questo stream è attivo
+                            const streamActivity = dashboardData.timeline.map(month => ({
+                              month: month.month,
+                              hours: month.streamData[stream.stream] || 0,
+                              hasActivity: (month.streamData[stream.stream] || 0) > 0
+                            }));
+                            
+                            return (
+                              <div key={streamIndex} className="flex items-center hover:bg-gray-50 rounded-lg">
+                                {/* Stream Name */}
+                                <div className="w-48 py-3 px-4 flex items-center gap-3">
+                                  <div 
+                                    className="w-4 h-4 rounded-full flex-shrink-0" 
+                                    style={{ backgroundColor: stream.color }}
+                                  ></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate" title={stream.stream}>
+                                      {stream.stream}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {stream.hours}h • {stream.projects} progetti
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Timeline Bars */}
+                                <div className="flex-1 flex">
+                                  {streamActivity.map((activity, monthIndex) => {
+                                    const maxHours = Math.max(...dashboardData.timeline.map(m => 
+                                      Math.max(...Object.values(m.streamData))
+                                    ));
+                                    const intensity = activity.hours / maxHours;
+                                    
+                                    return (
+                                      <div 
+                                        key={monthIndex}
+                                        className="flex-1 min-w-20 py-3 px-2 border-l border-gray-200"
+                                      >
+                                        {activity.hasActivity && (
+                                          <div className="relative group">
+                                            <div 
+                                              className="h-6 rounded transition-all duration-200 hover:h-8"
+                                              style={{ 
+                                                backgroundColor: stream.color,
+                                                opacity: Math.max(0.3, intensity),
+                                                width: `${Math.max(20, intensity * 100)}%`
+                                              }}
+                                            ></div>
+                                            
+                                            {/* Tooltip */}
+                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                              {activity.month}: {activity.hours.toFixed(1)}h
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                      
+                      {/* Legend */}
+                      <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-2 bg-gray-400 rounded" style={{ opacity: 0.3 }}></div>
+                          <span>Bassa attività</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-2 bg-gray-400 rounded" style={{ opacity: 0.6 }}></div>
+                          <span>Media attività</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-2 bg-gray-400 rounded" style={{ opacity: 1 }}></div>
+                          <span>Alta attività</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Riga 3: Timeline ore per stream */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
@@ -1120,7 +1735,7 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* Riga 3: Timeline progetti per mese */}
+            {/* Riga 4: Timeline progetti per mese */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-green-500" />
@@ -1151,7 +1766,7 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* Riga 4: Tutti i grafici a torta */}
+            {/* Riga 5: Tutti i grafici a torta */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Status Distribution */}
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -1282,126 +1897,8 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Team Members Cards - sotto tutto */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-500" />
-                Membri del Team
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(dashboardData.teamMembers || []).map((member) => (
-                  <div 
-                    key={member.name} 
-                    className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer transition-all hover:shadow-xl hover:scale-105 ${
-                      selectedTeamMember === member.name 
-                        ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-blue-100' 
-                        : 'hover:shadow-xl'
-                    }`}
-                    onClick={() => setSelectedTeamMember(
-                      selectedTeamMember === member.name ? '' : member.name
-                    )}
-                  >
-                    {/* Header con avatar e info base */}
-                    <div className="flex items-center gap-4 mb-6">
-                      {/* Avatar */}
-                      <div className="relative">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                          <svg 
-                            className="w-8 h-8 text-white" 
-                            fill="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                          </svg>
-                        </div>
-                      </div>
-                      
-                      {/* Info personali */}
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 text-lg mb-1">
-                          {member.name}
-                        </h4>
-                        <div className="text-sm text-gray-500 mb-2">
-                          Senior Developer
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            {member.totalProjects} progetti
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            {member.totalHours}h totali
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Gauge centrale - più prominente */}
-                    <div className="mb-6 bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-center">
-                        <WorkPressureGauge
-                          value={member.workPressure}
-                          maxValue={150}
-                          size={140}
-                          title="Carico di Lavoro"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Stream distribution - ridisegnata */}
-                    <div className="mb-4">
-                      <div className="text-sm font-medium text-gray-700 mb-3">Distribuzione Stream</div>
-                      <div className="space-y-2">
-                        {member.streams.slice(0, 3).map((stream, index) => (
-                          <div key={index} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-3 h-3 rounded-full" 
-                                style={{ backgroundColor: stream.color }}
-                              ></div>
-                              <span className="text-xs text-gray-600 truncate max-w-[120px]">
-                                {stream.stream}
-                              </span>
-                            </div>
-                            <div className="text-xs font-medium text-gray-800">
-                              {stream.projects}p
-                            </div>
-                          </div>
-                        ))}
-                        {member.streams.length > 3 && (
-                          <div className="text-xs text-gray-500 text-center pt-1">
-                            +{member.streams.length - 3} altri stream
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Footer con statistiche */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="grid grid-cols-2 gap-4 text-center">
-                        <div>
-                          <div className="text-lg font-bold text-blue-600">
-                            {Math.round(member.totalHours / member.totalProjects)}h
-                          </div>
-                          <div className="text-xs text-gray-500">Media/Progetto</div>
-                        </div>
-                        <div>
-                          <div className={`text-lg font-bold ${
-                            member.workPressure > 100 ? 'text-red-600' : 
-                            member.workPressure > 80 ? 'text-yellow-600' : 'text-green-600'
-                          }`}>
-                            {member.workPressure > 100 ? 'Sovraccarico' : 
-                             member.workPressure > 80 ? 'Occupato' : 'Disponibile'}
-                          </div>
-                          <div className="text-xs text-gray-500">Status</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Team Members Section - sotto tutto */}
+            <TeamMembersSection />
 
             {/* Upload new data button */}
             <div className="text-center">
