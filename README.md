@@ -1,6 +1,27 @@
 # 📊 Team Dashboard
 
-Una dashboard completa per la gestione e visualizzazione di progetti, allocazione risorse e performance del team.
+[![Deploy to GitHub Pages](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml)
+[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://giamma80.github.io/dashboard/)
+[![Latest Release](https://img.shields.io/github/v/release/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
+
+**Una dashboard completa per la gestione e visualizzazione di progetti, allocazione risorse e performance del team.**
+
+🌐 **[PROVA LA DEMO LIVE](https://giamma80.github.io/dashboard/)** | 📦 **[SCARICA L'APP DESKTOP](https://github.com/giamma80/dashboard/releases/latest)**
+
+## 🚀 Accesso Rapido
+
+### 🌐 **Versione Web (Gratuita)**
+Accedi subito alla dashboard online: **[https://giamma80.github.io/dashboard/](https://giamma80.github.io/dashboard/)**
+
+### 💻 **App Desktop per Windows**
+Scarica l'applicazione desktop dalla [pagina delle release](https://github.com/giamma80/dashboard/releases/latest):
+
+- **🔧 People.Dashboard.Setup.1.0.0.exe** - Installer completo (559 MB)
+- **📦 People.Dashboard-1.0.0-win.zip** - Versione portable x64 (231 MB)  
+- **📦 People.Dashboard-1.0.0-ia32-win.zip** - Versione portable x32 (486 MB)
+
+> 💡 **Consiglio**: Per uso occasionale usa la versione web, per uso quotidiano scarica l'app desktop.
 
 ## 🎯 Descrizione del Progetto
 
@@ -41,6 +62,7 @@ La dashboard consente di:
 
 ## 💻 Tecnologie Utilizzate
 
+### 🖥️ **Frontend & Web**
 - **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS
 - **Grafici**: Recharts
@@ -48,8 +70,33 @@ La dashboard consente di:
 - **Build Tool**: Vite
 - **Package Manager**: npm
 
+### 📱 **Desktop App**
+- **Framework**: Electron
+- **Builder**: electron-builder
+- **Piattaforme**: Windows (x64, x32)
+- **Auto-Update**: GitHub Releases integration
+
+### 🔄 **CI/CD & Deployment**
+- **GitHub Actions**: Workflow automatizzati
+- **GitHub Pages**: Hosting web gratuito
+- **Auto-Release**: Binari generati automaticamente
+- **Multi-Platform**: Build automatico per diverse architetture
+
 ## 📦 Installazione e Utilizzo
 
+### 🌐 **Versione Web (Veloce)**
+1. Vai su [https://giamma80.github.io/dashboard/](https://giamma80.github.io/dashboard/)
+2. Carica il tuo file CSV
+3. Inizia ad analizzare i dati!
+
+### 💻 **App Desktop Windows**
+1. Vai alle [Release](https://github.com/giamma80/dashboard/releases/latest)
+2. Scarica il file appropriato:
+   - **Setup.exe** per installazione completa
+   - **win.zip** per versione portable
+3. Installa o estrai ed esegui l'applicazione
+
+### 🛠️ **Sviluppo Locale**
 ```bash
 # Clona il repository
 git clone https://github.com/giamma80/dashboard.git
@@ -63,6 +110,9 @@ npm run dev
 
 # Build per produzione
 npm run build
+
+# Build app Electron (solo Windows)
+npm run electron:build
 ```
 
 ## 📄 Formato CSV Supportato
@@ -82,24 +132,74 @@ Il file CSV deve contenere le seguenti colonne (separate da `;`):
 11. **Stakeholder**
 12. **Tipo Progetto**
 
-## 🏗️ Architettura
+## 🏗️ Architettura & CI/CD
 
+### 📁 **Struttura Progetto**
 ```
-people-dashboard/
-├── src/
-│   ├── components/
-│   │   ├── Dashboard.tsx      # Componente principale
-│   │   ├── Toast.tsx         # Sistema notifiche
-│   │   └── DownloadSection.tsx
-│   ├── App.tsx
-│   └── main.tsx
-├── public/
-└── package.json
+dashboard/
+├── people-dashboard/          # App principale React
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Dashboard.tsx      # Componente principale
+│   │   │   ├── Toast.tsx         # Sistema notifiche
+│   │   │   └── DownloadSection.tsx
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── public/
+│   ├── dist/                 # Build web per GitHub Pages
+│   └── package.json
+├── .github/
+│   └── workflows/
+│       ├── deploy-pages.yml  # Deploy automatico web
+│       └── build-release.yml # Build binari Electron
+└── README.md
 ```
+
+### 🔄 **Flusso CI/CD Automatico**
+
+#### 🌐 **GitHub Pages (Web)**
+- **Trigger**: Push su branch `main`
+- **Processo**: Build → Test → Deploy su GitHub Pages
+- **URL Live**: https://giamma80.github.io/dashboard/
+- **Stato**: [![Deploy Status](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml)
+
+#### 📦 **Release Binari (Desktop)**  
+- **Trigger**: Creazione nuovo tag (es. `v1.8`)
+- **Processo**: Build → Package → Release automatico
+- **Output**: 3 binari Windows (Setup.exe, x64.zip, x32.zip)
+- **Stato**: [![Release Status](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+
+### 🎯 **Workflow di Release**
+1. **Sviluppo**: Modifica codice in locale
+2. **Commit**: `git commit -m "feature: nuova funzionalità"`
+3. **Push**: `git push origin main` → Aggiorna sito web
+4. **Tag**: `git tag v1.x && git push origin v1.x` → Genera binari
+5. **Automatico**: GitHub Actions crea release con binari Windows
 
 ---
 
 # 📋 Changelog
+
+## [v1.7] - 2025-07-30
+### 🎉 **RELEASE COMPLETA - CI/CD FUNZIONANTE!**
+- **✅ Sistema CI/CD Completo**: Pipeline automatico GitHub Actions
+- **✅ Release Automatiche**: Binari Windows generati per ogni tag
+- **✅ GitHub Pages Live**: Dashboard online su https://giamma80.github.io/dashboard/
+- **📦 3 Binari Windows**: Setup.exe (559MB), win.zip (231MB), ia32-win.zip (486MB)
+
+### 🔧 **Miglioramenti Tecnici**
+- **PowerShell Compatibility**: Fix comandi Windows in GitHub Actions
+- **Multi-Architecture**: Supporto x64 e x32 per Windows
+- **Professional Packaging**: Installer completo + versioni portable
+- **Auto-Release**: Creazione automatica release GitHub con binari
+
+### 🚀 **Sistema Deployment**
+- **Web Deployment**: Auto-deploy su GitHub Pages per ogni push
+- **Desktop Release**: Auto-build binari Electron per ogni tag
+- **Professional Workflow**: CI/CD enterprise-grade completo
+- **Zero Manual Work**: Tutto automatico dalla creazione tag
+
+---
 
 ## [v1.6] - 2025-07-30
 ### ✨ Nuove Funzionalità
@@ -216,23 +316,67 @@ people-dashboard/
 
 Per contribuire al progetto:
 
-1. Fork del repository
-2. Crea un branch per la feature (`git checkout -b feature/amazing-feature`)
-3. Commit delle modifiche (`git commit -m 'Add amazing feature'`)
-4. Push al branch (`git push origin feature/amazing-feature`)
-5. Apri una Pull Request
+1. **Fork del repository**
+2. **Crea un branch per la feature** (`git checkout -b feature/amazing-feature`)
+3. **Commit delle modifiche** (`git commit -m 'Add amazing feature'`)
+4. **Push al branch** (`git push origin feature/amazing-feature`)  
+5. **Apri una Pull Request**
+
+### � **Processo Release**
+Per i maintainer del progetto:
+```bash
+# 1. Aggiorna il README con nuove feature (questo file)
+# 2. Committa le modifiche
+git add README.md
+git commit -m "📝 Update README per v1.x"
+
+# 3. Crea e pusha il tag
+git tag v1.x
+git push origin main
+git push origin v1.x
+
+# 4. GitHub Actions farà automaticamente:
+#    - Deploy web su GitHub Pages  
+#    - Build e release binari Windows
+#    - Creazione release GitHub con changelog
+```
+
+## 📊 Statistiche Progetto
+
+- **🌐 Demo Live**: [giamma80.github.io/dashboard](https://giamma80.github.io/dashboard/)
+- **� Download Totali**: [![GitHub Downloads](https://img.shields.io/github/downloads/giamma80/dashboard/total)](https://github.com/giamma80/dashboard/releases)
+- **⭐ Stars**: [![GitHub Stars](https://img.shields.io/github/stars/giamma80/dashboard)](https://github.com/giamma80/dashboard/stargazers)
+- **🐛 Issues**: [![GitHub Issues](https://img.shields.io/github/issues/giamma80/dashboard)](https://github.com/giamma80/dashboard/issues)
+- **🔄 Last Release**: [![GitHub Release Date](https://img.shields.io/github/release-date/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
 
 ## 📝 Licenza
 
 Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettagli.
 
-## 📞 Supporto
+## 📞 Supporto & Community
 
-Per supporto o domande:
-- 📧 Email: [supporto@teamdashboard.com](mailto:supporto@teamdashboard.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/giamma80/dashboard/issues)
-- 📖 Wiki: [Documentazione Completa](https://github.com/giamma80/dashboard/wiki)
+### 💬 **Supporto**
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/giamma80/dashboard/issues)
+- � **Feature Requests**: [GitHub Discussions](https://github.com/giamma80/dashboard/discussions)
+- 📖 **Documentazione**: [Wiki del Progetto](https://github.com/giamma80/dashboard/wiki)
+
+### 🚀 **Links Utili**
+- **🌐 Demo Live**: https://giamma80.github.io/dashboard/
+- **📦 Scarica App**: https://github.com/giamma80/dashboard/releases/latest
+- **📊 Statistiche**: https://github.com/giamma80/dashboard/pulse
+- **🔄 CI/CD Status**: https://github.com/giamma80/dashboard/actions
 
 ---
 
+## 🏆 **Risultati del Progetto**
+
+✅ **Dashboard Web Funzionante** - Live su GitHub Pages  
+✅ **App Desktop Windows** - Binari automatici per ogni release  
+✅ **CI/CD Completo** - Pipeline automatico professionale  
+✅ **Zero Manual Deployment** - Tutto automatizzato da git tag  
+
 ⭐ **Se questo progetto ti è utile, considera di dargli una stella su GitHub!**
+
+---
+
+*Team Dashboard - Trasforma i tuoi dati CSV in insights azionabili.* 🚀
