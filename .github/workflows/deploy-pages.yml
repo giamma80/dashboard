@@ -34,20 +34,17 @@ jobs:
           cache-dependency-path: people-dashboard/package-lock.json
           
       - name: Install dependencies
-        run: |
-          cd people-dashboard
-          npm ci
+        working-directory: people-dashboard
+        run: npm ci
           
       - name: Build for GitHub Pages
-        run: |
-          cd people-dashboard
-          npm run build
+        working-directory: people-dashboard
+        run: npm run build
         env:
-          # Set the base path for GitHub Pages
-          PUBLIC_URL: /dashboard
+          NODE_ENV: production
           
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
