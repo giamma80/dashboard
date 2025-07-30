@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Upload, Download, Calendar, User, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X, ChevronDown } from 'lucide-react';
+import { Users, Upload, Download, Calendar, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X, ChevronDown } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart, Line } from 'recharts';
 import DownloadSection from './DownloadSection';
 
@@ -49,6 +49,7 @@ interface DashboardData {
   totalTeamHours: number;
   totalTeamProjects: number;
   teamWorkPressure: number;
+  totalTeamWorkHours: number;
   statusDistribution: { [status: string]: number };
   priorityDistribution: { [priority: string]: number };
   typeDistribution: { [type: string]: number };
@@ -129,7 +130,8 @@ const Dashboard = () => {
     start: '2025-04-01',
     end: '2026-03-31'
   });
-  const [selectedTeamMember, setSelectedTeamMember] = useState<string>('');
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>([]);
+  const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
   
   // State per la card dettagliata del membro
   const [selectedMemberForCard, setSelectedMemberForCard] = useState<string>('');
@@ -146,6 +148,10 @@ const Dashboard = () => {
   
   // State per il filtro quarter
   const [selectedQuarter, setSelectedQuarter] = useState<string>('');
+  
+  // State per dropdown aperti
+  const [isTeamMembersDropdownOpen, setIsTeamMembersDropdownOpen] = useState(false);
+  const [isStreamsDropdownOpen, setIsStreamsDropdownOpen] = useState(false);
 
   // Funzioni helper per i quarter
   const getQuarterOptions = () => {
@@ -186,6 +192,7 @@ const Dashboard = () => {
     totalTeamHours: 0,
     totalTeamProjects: 0,
     teamWorkPressure: 0,
+    totalTeamWorkHours: 0,
     statusDistribution: {},
     priorityDistribution: {},
     typeDistribution: {},
@@ -296,8 +303,60 @@ const Dashboard = () => {
     return startDate <= monthEnd && endDate >= monthStart;
   };
 
+  // Funzione per calcolare le ore effettive di un progetto in un periodo specifico
+  const calculateProjectHoursInPeriod = (project: ProjectData, periodStart: Date, periodEnd: Date): number => {
+    const projectStart = parseDate(project.startDate);
+    const projectEnd = parseDate(project.deliveryDeadline);
+    
+    if (!projectStart || !projectEnd || project.neededHours <= 0) {
+      return 0;
+    }
+    
+    // Calcola l'overlap effettivo tra il progetto e il periodo
+    const overlapStart = new Date(Math.max(projectStart.getTime(), periodStart.getTime()));
+    const overlapEnd = new Date(Math.min(projectEnd.getTime(), periodEnd.getTime()));
+    
+    // Se non c'è overlap, ritorna 0
+    if (overlapStart > overlapEnd) {
+      return 0;
+    }
+    
+    // Calcola la durata totale del progetto in giorni lavorativi
+    const totalProjectDays = calculateWorkingDaysBetween(projectStart, projectEnd);
+    
+    // Calcola i giorni lavorativi nell'overlap
+    const overlapWorkingDays = calculateWorkingDaysBetween(overlapStart, overlapEnd);
+    
+    // Se non ci sono giorni lavorativi totali, distribuisci uniformemente
+    if (totalProjectDays === 0) {
+      return project.neededHours;
+    }
+    
+    // Calcola la proporzione di ore per il periodo di overlap
+    const hoursProportion = (overlapWorkingDays / totalProjectDays) * project.neededHours;
+    
+    return Math.max(0, hoursProportion);
+  };
+
+  // Funzione per calcolare i giorni lavorativi tra due date (escludi weekend)
+  const calculateWorkingDaysBetween = (startDate: Date, endDate: Date): number => {
+    let workingDays = 0;
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+      const dayOfWeek = currentDate.getDay();
+      // 1-5 sono lunedì-venerdì (0 = domenica, 6 = sabato)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        workingDays++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return workingDays;
+  };
+
   // Funzione per processare i dati CSV
-  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilter: string): DashboardData => {
+  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[]): DashboardData => {
     const lines = csvContent.trim().split('\n');
     
     const projects: ProjectData[] = lines.slice(1).map(line => {
@@ -318,10 +377,15 @@ const Dashboard = () => {
       };
     }).filter(project => project.name && project.teamMember);
 
-    // Applica filtro membro del team
-    const filteredProjects = memberFilter 
-      ? projects.filter(p => p.teamMember === memberFilter)
+    // Applica filtro membri del team (se vuoto, mostra tutti)
+    const memberFilteredProjects = memberFilters.length > 0 
+      ? projects.filter(p => memberFilters.includes(p.teamMember))
       : projects;
+
+    // Applica filtro stream (se vuoto, mostra tutti)
+    const filteredProjects = streamFilters.length > 0 
+      ? memberFilteredProjects.filter(p => streamFilters.includes(p.stream))
+      : memberFilteredProjects;
 
     // Applica filtro data
     const startFilterDate = new Date(dateFilter.start);
@@ -350,44 +414,38 @@ const Dashboard = () => {
       );
       
       month.totalProjects = activeProjects.length;
-      month.totalHours = activeProjects.reduce((sum, project) => {
-        // Distribuzione ore del progetto sui mesi attivi
-        const projectStart = parseDate(project.startDate);
-        const projectEnd = parseDate(project.deliveryDeadline);
+      month.totalHours = Math.round(activeProjects.reduce((sum, project) => {
+        // Calcola l'inizio e la fine del mese corrente
+        const monthStart = new Date(month.date.getFullYear(), month.date.getMonth(), 1);
+        const monthEnd = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0);
         
-        // Se le date non sono valide, salta il progetto
-        if (!projectStart || !projectEnd) {
-          return sum;
-        }
+        // Calcola le ore effettive del progetto in questo mese
+        const hoursInThisMonth = calculateProjectHoursInPeriod(project, monthStart, monthEnd);
         
-        const monthsActive = Math.max(1, Math.ceil((projectEnd.getTime() - projectStart.getTime()) / (30 * 24 * 60 * 60 * 1000)));
-        return sum + (project.neededHours / monthsActive);
-      }, 0);
+        return sum + hoursInThisMonth;
+      }, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
       
       // Raggruppa per stream con aggregazione degli stream minori
       const monthStreamMap = new Map<string, number>();
       
       activeProjects.forEach(project => {
-        const projectStart = parseDate(project.startDate);
-        const projectEnd = parseDate(project.deliveryDeadline);
+        // Calcola l'inizio e la fine del mese corrente
+        const monthStart = new Date(month.date.getFullYear(), month.date.getMonth(), 1);
+        const monthEnd = new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0);
         
-        // Se le date non sono valide, salta il progetto
-        if (!projectStart || !projectEnd) {
-          return;
-        }
-        
-        const monthsActive = Math.max(1, Math.ceil((projectEnd.getTime() - projectStart.getTime()) / (30 * 24 * 60 * 60 * 1000)));
-        const hoursPortion = project.neededHours / monthsActive;
+        // Calcola le ore effettive del progetto in questo mese
+        const hoursInThisMonth = calculateProjectHoursInPeriod(project, monthStart, monthEnd);
         
         if (!monthStreamMap.has(project.stream)) {
           monthStreamMap.set(project.stream, 0);
         }
-        monthStreamMap.set(project.stream, monthStreamMap.get(project.stream)! + hoursPortion);
+        const currentHours = monthStreamMap.get(project.stream)!;
+        monthStreamMap.set(project.stream, Math.round((currentHours + hoursInThisMonth) * 10) / 10); // Arrotonda a 1 cifra decimale
       });
       
-      // Se c'è un filtro membro attivo, mostra tutti i suoi stream senza aggregazione
-      if (memberFilter && memberFilter.trim() !== '') {
-        // Mostra tutti gli stream del membro filtrato
+      // Se ci sono filtri membri attivi, mostra tutti i loro stream senza aggregazione
+      if (memberFilters.length > 0) {
+        // Mostra tutti gli stream dei membri filtrati
         monthStreamMap.forEach((hours, stream) => {
           month.streamData[stream] = hours;
           (month as any)[stream] = hours;
@@ -406,7 +464,7 @@ const Dashboard = () => {
         
         // Aggrega stream minori in "Altri"
         if (minorMonthStreams.length > 0) {
-          const othersHours = minorMonthStreams.reduce((sum, [, hours]) => sum + hours, 0);
+          const othersHours = Math.round(minorMonthStreams.reduce((sum, [, hours]) => sum + hours, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
           month.streamData['Altri'] = othersHours;
           (month as any)['Altri'] = othersHours;
         }
@@ -428,7 +486,11 @@ const Dashboard = () => {
       }
       
       const member = teamMemberMap.get(project.teamMember)!;
-      member.totalHours += project.neededHours;
+      
+      // Calcola le ore effettive del progetto nel periodo di filtro
+      const effectiveHours = calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate);
+      
+      member.totalHours = Math.round((member.totalHours + effectiveHours) * 10) / 10; // Arrotonda a 1 cifra decimale
       member.totalProjects += 1;
     });
 
@@ -442,7 +504,11 @@ const Dashboard = () => {
           streamMap.set(project.stream, { hours: 0, projects: 0 });
         }
         const streamData = streamMap.get(project.stream)!;
-        streamData.hours += project.neededHours;
+        
+        // Calcola le ore effettive del progetto nel periodo di filtro
+        const effectiveHours = calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate);
+        
+        streamData.hours = Math.round((streamData.hours + effectiveHours) * 10) / 10; // Arrotonda a 1 cifra decimale
         streamData.projects += 1;
       });
       
@@ -461,7 +527,7 @@ const Dashboard = () => {
       
       // Se ci sono stream minori, aggregali in "Altri"
       if (minorMemberStreams.length > 0) {
-        const othersHours = minorMemberStreams.reduce((sum, stream) => sum + stream.hours, 0);
+        const othersHours = Math.round(minorMemberStreams.reduce((sum, stream) => sum + stream.hours, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
         const othersProjects = minorMemberStreams.reduce((sum, stream) => sum + stream.projects, 0);
         
         member.streams.push({
@@ -475,10 +541,28 @@ const Dashboard = () => {
 
     // Calcola il periodo dei dati per determinare le ore lavorative disponibili
     // USA SEMPRE il range di filtro selezionato dall'utente
-    console.log('Usando range di filtro selezionato per calcolo ore:', {
-      startFilterDate: startFilterDate.toLocaleDateString(),
-      endFilterDate: endFilterDate.toLocaleDateString(),
+    console.log('=== CALCOLO CARICO DI LAVORO ===');
+    console.log('Range di filtro selezionato:', {
+      startFilterDate: startFilterDate.toLocaleDateString('it-IT'),
+      endFilterDate: endFilterDate.toLocaleDateString('it-IT'),
       totalProjects: dateFilteredProjects.length
+    });
+    
+    // Debug: verifica distribuzione ore per alcuni progetti campione
+    const sampleProjects = dateFilteredProjects.slice(0, 3);
+    console.log('Campione distribuzione ore:');
+    sampleProjects.forEach(project => {
+      const projectStart = parseDate(project.startDate);
+      const projectEnd = parseDate(project.deliveryDeadline);
+      const effectiveHours = calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate);
+      
+      console.log(`- ${project.name}:`, {
+        totalHours: project.neededHours,
+        effectiveHours: effectiveHours.toFixed(1),
+        startDate: projectStart?.toLocaleDateString('it-IT'),
+        endDate: projectEnd?.toLocaleDateString('it-IT'),
+        percentage: ((effectiveHours / project.neededHours) * 100).toFixed(1) + '%'
+      });
     });
     
     // Calcola le ore lavorative disponibili per persona nel periodo di filtro
@@ -495,17 +579,17 @@ const Dashboard = () => {
     // Calcola work pressure per ogni membro
     teamMemberMap.forEach(member => {
       const rawPressure = (member.totalHours / finalAvailableHours) * 100;
-      member.workPressure = Math.min(rawPressure, 150);
-      console.log(`${member.name}: ${member.totalHours}h / ${finalAvailableHours}h = ${rawPressure.toFixed(1)}% (cap: ${member.workPressure.toFixed(1)}%)`);
+      member.workPressure = Math.min(rawPressure, 200);
+      console.log(`${member.name}: ${member.totalHours.toFixed(1)}h / ${finalAvailableHours}h = ${rawPressure.toFixed(1)}% (cap: ${member.workPressure.toFixed(1)}%)`);
     });
 
     const teamMembers = Array.from(teamMemberMap.values());
     
     // Calcola totali team
-    const totalTeamHours = teamMembers.reduce((sum, member) => sum + member.totalHours, 0);
+    const totalTeamHours = Math.round(teamMembers.reduce((sum, member) => sum + member.totalHours, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
     const totalTeamProjects = teamMembers.reduce((sum, member) => sum + member.totalProjects, 0);
     const totalTeamWorkHours = teamMembers.length * finalAvailableHours;
-    const teamWorkPressure = Math.min((totalTeamHours / totalTeamWorkHours) * 100, 150);
+    const teamWorkPressure = Math.min((totalTeamHours / totalTeamWorkHours) * 100, 200);
 
     // Calcola distribuzioni
     const statusDistribution: { [status: string]: number } = {};
@@ -522,7 +606,11 @@ const Dashboard = () => {
         streamMap.set(project.stream, { hours: 0, projects: 0 });
       }
       const streamData = streamMap.get(project.stream)!;
-      streamData.hours += project.neededHours;
+      
+      // Calcola le ore effettive del progetto nel periodo di filtro
+      const effectiveHours = calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate);
+      
+      streamData.hours = Math.round((streamData.hours + effectiveHours) * 10) / 10; // Arrotonda a 1 cifra decimale
       streamData.projects += 1;
     });
 
@@ -539,8 +627,8 @@ const Dashboard = () => {
 
     // STREAM DISTRIBUTION per GRAFICI: mantiene l'aggregazione "Altri" per migliore visualizzazione
     let streamDistributionForCharts;
-    if (memberFilter && memberFilter.trim() !== '') {
-      // Per membro specifico: mostra tutti i suoi stream
+    if (memberFilters.length > 0) {
+      // Per membri specifici: mostra tutti i loro stream
       streamDistributionForCharts = [...allStreamEntries];
     } else {
       // Per vista globale: aggrega gli stream minori in "Altri" solo per i grafici
@@ -551,7 +639,7 @@ const Dashboard = () => {
       
       // Aggrega stream minori in "Altri" solo per i grafici
       if (minorStreamsForCharts.length > 0) {
-        const othersHours = minorStreamsForCharts.reduce((sum, stream) => sum + stream.hours, 0);
+        const othersHours = Math.round(minorStreamsForCharts.reduce((sum, stream) => sum + stream.hours, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
         const othersProjects = minorStreamsForCharts.reduce((sum, stream) => sum + stream.projects, 0);
         
         streamDistributionForCharts.push({
@@ -563,13 +651,18 @@ const Dashboard = () => {
       }
     }
 
-    // Calcola top 5 progetti per ore
-    const topProjects = dateFilteredProjects
-      .sort((a, b) => b.neededHours - a.neededHours)
+    // Calcola top 5 progetti per ore effettive nel periodo di filtro
+    const projectsWithEffectiveHours = dateFilteredProjects.map(project => ({
+      ...project,
+      effectiveHours: Math.round(calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate) * 10) / 10 // Arrotonda a 1 cifra decimale
+    }));
+
+    const topProjects = projectsWithEffectiveHours
+      .sort((a, b) => b.effectiveHours - a.effectiveHours)
       .slice(0, 5)
       .map(project => ({
         name: project.name,
-        hours: project.neededHours,
+        hours: project.effectiveHours,
         stream: project.stream,
         member: project.teamMember,
         color: STREAM_COLORS[project.stream] || STREAM_COLORS.default
@@ -581,6 +674,7 @@ const Dashboard = () => {
       totalTeamHours,
       totalTeamProjects,
       teamWorkPressure,
+      totalTeamWorkHours,
       statusDistribution,
       priorityDistribution,
       typeDistribution,
@@ -627,14 +721,14 @@ const Dashboard = () => {
   useEffect(() => {
     if (csvData) {
       try {
-        const newData = processCSV(csvData, dateRange, selectedTeamMember);
+        const newData = processCSV(csvData, dateRange, selectedTeamMembers, selectedStreams);
         setDashboardData(newData);
       } catch (err) {
         console.error('Errore nel processamento CSV:', err);
         setError('Errore nel processamento dei dati');
       }
     }
-  }, [csvData, dateRange, selectedTeamMember]);
+  }, [csvData, dateRange, selectedTeamMembers, selectedStreams]);
 
   // Funzione per gestire il clic sulla timeline
   const handleTimelineClick = (data: any) => {
@@ -670,7 +764,7 @@ const Dashboard = () => {
     reader.onload = (e) => {
       try {
         const csvContent = e.target?.result as string;
-        const processedData = processCSV(csvContent, dateRange, selectedTeamMember);
+        const processedData = processCSV(csvContent, dateRange, selectedTeamMembers, selectedStreams);
         
         setDashboardData(processedData);
         setCsvData(csvContent);
@@ -701,7 +795,7 @@ const Dashboard = () => {
   };
 
   // Componente Gauge per la pressione di lavoro
-  const WorkPressureGauge = ({ value, maxValue = 150, size = 120, title }: { 
+  const WorkPressureGauge = ({ value, maxValue = 200, size = 120, title }: { 
     value: number; 
     maxValue?: number; 
     size?: number; 
@@ -780,7 +874,7 @@ const Dashboard = () => {
         <div className="text-center mt-2">
           <div className="text-sm font-medium text-gray-900">{title}</div>
           <div className="text-xs text-gray-600">
-            {Math.round(value)}% {value > 150 ? '(Max 150%)' : value > 100 ? '(Overtime)' : ''}
+            {Math.round(value)}% {value > 200 ? '(Max 200%)' : value > 100 ? '(Overtime)' : ''}
           </div>
           <div className="text-xs text-gray-400 mt-1">
             Ore effettive / Ore disponibili
@@ -815,117 +909,264 @@ const Dashboard = () => {
         start: '2025-04-01',
         end: '2026-03-31'
       });
-      setSelectedTeamMember('');
+      setSelectedTeamMembers([]);
       setSelectedQuarter('');
+      setSelectedStreams([]);
+    };
+
+    // Ottieni tutti i membri unici dai dati CSV
+    const getAllMembers = (): string[] => {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      const members = new Set<string>();
+      
+      lines.slice(1).forEach(line => {
+        const values = line.split(';');
+        const teamMember = values[2]?.trim();
+        if (teamMember) {
+          members.add(teamMember);
+        }
+      });
+      
+      return Array.from(members).sort();
+    };
+
+    // Ottieni tutti gli stream unici dai dati CSV
+    const getAllStreams = (): string[] => {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      const streams = new Set<string>();
+      
+      lines.slice(1).forEach(line => {
+        const values = line.split(';');
+        const stream = values[1]?.trim();
+        if (stream) {
+          streams.add(stream);
+        }
+      });
+      
+      return Array.from(streams).sort();
+    };
+
+    const allMembers = getAllMembers();
+    const allStreams = getAllStreams();
+
+    // Toggle member selection
+    const toggleMember = (member: string) => {
+      setSelectedTeamMembers(prev => 
+        prev.includes(member) 
+          ? prev.filter(m => m !== member)
+          : [...prev, member]
+      );
+    };
+
+    // Toggle stream selection
+    const toggleStream = (stream: string) => {
+      setSelectedStreams(prev => 
+        prev.includes(stream) 
+          ? prev.filter(s => s !== stream)
+          : [...prev, stream]
+      );
+    };
+
+    // Select/Deselect all members
+    const toggleAllMembers = () => {
+      if (selectedTeamMembers.length === allMembers.length) {
+        setSelectedTeamMembers([]);
+      } else {
+        setSelectedTeamMembers([...allMembers]);
+      }
+    };
+
+    // Select/Deselect all streams
+    const toggleAllStreams = () => {
+      if (selectedStreams.length === allStreams.length) {
+        setSelectedStreams([]);
+      } else {
+        setSelectedStreams([...allStreams]);
+      }
+    };
+
+    // Componente Dropdown per Multi-select
+    const MultiSelectDropdown = ({ 
+      title, 
+      selectedItems, 
+      allItems, 
+      onToggleItem, 
+      onToggleAll, 
+      isOpen, 
+      setIsOpen 
+    }: {
+      title: string;
+      selectedItems: string[];
+      allItems: string[];
+      onToggleItem: (item: string) => void;
+      onToggleAll: () => void;
+      isOpen: boolean;
+      setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    }) => {
+      return (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-left cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">
+                {selectedItems.length === 0 
+                  ? `Tutti i ${title.toLowerCase()}` 
+                  : selectedItems.length === allItems.length
+                  ? `Tutti i ${title.toLowerCase()} (${selectedItems.length})`
+                  : `${selectedItems.length} ${title.toLowerCase()} selezionati`
+                }
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {isOpen && (
+            <>
+              {/* Backdrop per chiudere il dropdown */}
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsOpen(false)}
+              />
+              
+              {/* Dropdown content */}
+              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {/* Seleziona tutti */}
+                <div className="px-3 py-2 border-b border-gray-200">
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.length === allItems.length}
+                      onChange={onToggleAll}
+                      className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-900">
+                      Seleziona tutti ({allItems.length})
+                    </span>
+                  </label>
+                </div>
+
+                {/* Lista items */}
+                <div className="py-1">
+                  {allItems.map((item) => (
+                    <label
+                      key={item}
+                      className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(item)}
+                        onChange={() => onToggleItem(item)}
+                        className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700 truncate" title={item}>
+                        {item}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
     };
 
     return (
       <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-        <div className="flex items-center justify-between">
+        {/* Prima riga: Range date, Membri, Stream */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4 flex-wrap">
+            {/* Range Date */}
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filtri:</span>
-            </div>
-            
-            {/* Filtro data */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <label className="text-sm text-gray-600">Dal:</label>
+              <Calendar className="w-4 h-4 text-gray-400" />
               <input
                 type="date"
                 value={dateRange.start}
-                onChange={(e) => {
-                  setDateRange(prev => ({ ...prev, start: e.target.value }));
-                  setSelectedQuarter(''); // Reset quarter quando si cambia data manualmente
-                }}
-                className="text-sm border border-gray-300 rounded px-2 py-1"
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <label className="text-sm text-gray-600">Al:</label>
+              <span className="text-gray-500">-</span>
               <input
                 type="date"
                 value={dateRange.end}
-                onChange={(e) => {
-                  setDateRange(prev => ({ ...prev, end: e.target.value }));
-                  setSelectedQuarter(''); // Reset quarter quando si cambia data manualmente
-                }}
-                className="text-sm border border-gray-300 rounded px-2 py-1"
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {isMonthFilter() && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    📅 Mese selezionato
-                  </span>
-                  <button
-                    onClick={resetToFullRange}
-                    className="text-xs text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Mostra tutto
-                  </button>
-                </div>
-              )}
             </div>
-            
-            {/* Filtro quarter */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <label className="text-sm text-gray-600">Quarter:</label>
-              <select
-                value={selectedQuarter}
-                onChange={(e) => handleQuarterChange(e.target.value)}
-                className="text-sm border border-gray-300 rounded px-2 py-1 min-w-[160px]"
-              >
-                {getQuarterOptions().map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {selectedQuarter && (
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  📊 Quarter selezionato
-                </span>
-              )}
+
+            {/* Dropdown Membri */}
+            <div className="min-w-60">
+              <MultiSelectDropdown
+                title="Membri"
+                selectedItems={selectedTeamMembers}
+                allItems={allMembers}
+                onToggleItem={toggleMember}
+                onToggleAll={toggleAllMembers}
+                isOpen={isTeamMembersDropdownOpen}
+                setIsOpen={setIsTeamMembersDropdownOpen}
+              />
             </div>
-            
-            {/* Filtro membro del team */}
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <label className="text-sm text-gray-600">Membro:</label>
-              <select
-                value={selectedTeamMember}
-                onChange={(e) => setSelectedTeamMember(e.target.value)}
-                className="text-sm border border-gray-300 rounded px-2 py-1"
-              >
-                <option value="">Tutti</option>
-                {dashboardData?.teamMembers.map(member => (
-                  <option key={member.name} value={member.name}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-              {selectedTeamMember && (
-                <button
-                  onClick={() => setSelectedTeamMember('')}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+
+            {/* Dropdown Stream */}
+            <div className="min-w-60">
+              <MultiSelectDropdown
+                title="Stream"
+                selectedItems={selectedStreams}
+                allItems={allStreams}
+                onToggleItem={toggleStream}
+                onToggleAll={toggleAllStreams}
+                isOpen={isStreamsDropdownOpen}
+                setIsOpen={setIsStreamsDropdownOpen}
+              />
             </div>
           </div>
 
-          {/* Bottone Pulisci tutti i filtri */}
-          {(selectedTeamMember || selectedQuarter || isMonthFilter()) && (
+          {/* Pulsante Reset Range */}
+          {isMonthFilter() && (
+            <button
+              onClick={resetToFullRange}
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm transition-colors"
+            >
+              Reset a vista completa
+            </button>
+          )}
+        </div>
+
+        {/* Seconda riga: Quarter Chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-gray-700">Quarter:</span>
+          {getQuarterOptions().map((quarter) => (
+            <button
+              key={quarter.value}
+              onClick={() => handleQuarterChange(quarter.value)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                selectedQuarter === quarter.value
+                  ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+              }`}
+            >
+              {quarter.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Pulsante Pulisci tutti i filtri */}
+        {(selectedTeamMembers.length > 0 || selectedQuarter || selectedStreams.length > 0 || isMonthFilter()) && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
             <button
               onClick={clearAllFilters}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors border border-gray-300"
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-colors text-sm font-medium"
             >
               <X className="w-4 h-4" />
               Pulisci tutti i filtri
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -945,7 +1186,7 @@ const Dashboard = () => {
     const handleMemberCardClick = (memberName: string) => {
       if (selectedMemberForCard === memberName) {
         // Se clicco di nuovo sulla stessa card, aggiorno la dashboard (applico filtro)
-        setSelectedTeamMember(memberName);
+        setSelectedTeamMembers([memberName]);
         setSelectedMemberForCard('');
       } else {
         // Apro la card del membro
@@ -967,9 +1208,9 @@ const Dashboard = () => {
 
     // Applica i filtri globali ai membri del team
     const filteredMembers = dashboardData?.teamMembers.filter(member => {
-      // Se c'è un filtro membro attivo, mostra solo quel membro
-      if (selectedTeamMember && selectedTeamMember.trim() !== '') {
-        return member.name === selectedTeamMember;
+      // Se ci sono filtri membri attivi, mostra solo quei membri
+      if (selectedTeamMembers.length > 0) {
+        return selectedTeamMembers.includes(member.name);
       }
       // Altrimenti mostra tutti i membri (potrebbero essere già filtrati per data)
       return true;
@@ -1050,9 +1291,9 @@ const Dashboard = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-purple-500" />
           Membri del Team
-          {selectedTeamMember && (
+          {selectedTeamMembers.length > 0 && (
             <span className="text-sm text-gray-500 ml-2">
-              (Filtrato: {selectedTeamMember})
+              (Filtrati: {selectedTeamMembers.length})
             </span>
           )}
         </h3>
@@ -1063,14 +1304,14 @@ const Dashboard = () => {
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-gray-900 mb-2">Nessun membro trovato</h4>
             <p className="text-gray-600 text-sm">
-              {selectedTeamMember 
-                ? `Nessun dato disponibile per ${selectedTeamMember} nel periodo selezionato.`
+              {selectedTeamMembers.length > 0 
+                ? `Nessun dato disponibile per i membri selezionati nel periodo selezionato.`
                 : 'Nessun membro del team ha progetti nel periodo selezionato.'
               }
             </p>
-            {selectedTeamMember && (
+            {selectedTeamMembers.length > 0 && (
               <button
-                onClick={() => setSelectedTeamMember('')}
+                onClick={() => setSelectedTeamMembers([])}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 Mostra tutti i membri
@@ -1141,7 +1382,7 @@ const Dashboard = () => {
                             {member.totalProjects}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {member.totalHours}h
+                            {member.totalHours.toFixed(1)}h
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {member.streams.length > 0 ? (
@@ -1211,7 +1452,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="font-medium">{selectedMember.totalHours}h totali</span>
+                          <span className="font-medium">{selectedMember.totalHours.toFixed(1)}h totali</span>
                         </div>
                       </div>
                     </div>
@@ -1225,7 +1466,7 @@ const Dashboard = () => {
                     <div className="flex justify-center">
                       <WorkPressureGauge
                         value={selectedMember.workPressure}
-                        maxValue={150}
+                        maxValue={200}
                         size={200}
                         title=""
                       />
@@ -1236,7 +1477,7 @@ const Dashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-blue-50 p-6 rounded-xl text-center">
                       <div className="text-3xl font-bold text-blue-600 mb-2">
-                        {Math.round(selectedMember.totalHours / selectedMember.totalProjects)}h
+                        {(selectedMember.totalHours / selectedMember.totalProjects).toFixed(1)}h
                       </div>
                       <div className="text-sm font-medium text-gray-700">Media per Progetto</div>
                     </div>
@@ -1262,12 +1503,12 @@ const Dashboard = () => {
                             <div>
                               <span className="text-sm font-medium text-gray-900">{stream.stream}</span>
                               <div className="text-xs text-gray-500 mt-1">
-                                {stream.projects} progett{stream.projects === 1 ? 'o' : 'i'} • {stream.hours} ore
+                                {stream.projects} progett{stream.projects === 1 ? 'o' : 'i'} • {stream.hours.toFixed(1)} ore
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-gray-900">{stream.hours}h</div>
+                            <div className="text-lg font-bold text-gray-900">{stream.hours.toFixed(1)}h</div>
                             <div className="text-xs text-gray-500">{stream.projects}p</div>
                           </div>
                         </div>
@@ -1404,7 +1645,7 @@ const Dashboard = () => {
                         </svg>
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-green-600">{dashboardData.totalTeamHours}</div>
+                    <div className="text-2xl font-bold text-green-600">{dashboardData.totalTeamHours.toFixed(1)}</div>
                     <div className="text-sm text-gray-600">Ore Totali</div>
                   </div>
                   <div className="text-center bg-purple-50 rounded-lg p-4 border border-purple-100">
@@ -1434,7 +1675,7 @@ const Dashboard = () => {
                 {/* Sezione Avanzata */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Top 5 Stream */}
-                  <div>
+                  <div className="md:border-r md:border-gray-200 md:pr-4">
                     <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       Top 5 Stream (per ore)
@@ -1451,12 +1692,12 @@ const Dashboard = () => {
                                 className="w-2 h-2 rounded-full" 
                                 style={{ backgroundColor: stream.color }}
                               ></div>
-                              <span className="text-sm text-gray-700 truncate max-w-[100px]">
+                              <span className="text-sm text-gray-700 truncate max-w-[100px]" title={stream.stream}>
                                 {stream.stream}
                               </span>
                             </div>
                             <div className="text-sm font-medium text-gray-900">
-                              {stream.hours}h
+                              {stream.hours.toFixed(1)}h
                             </div>
                           </div>
                         ))}
@@ -1464,7 +1705,7 @@ const Dashboard = () => {
                   </div>
 
                   {/* Top 5 Progetti */}
-                  <div>
+                  <div className="md:border-r md:border-gray-200 md:pr-4">
                     <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
                       Top 5 Progetti (per ore)
@@ -1483,7 +1724,7 @@ const Dashboard = () => {
                             </span>
                           </div>
                           <div className="text-sm font-medium text-gray-900">
-                            {project.hours}h
+                            {project.hours.toFixed(1)}h
                           </div>
                         </div>
                       ))}
@@ -1538,17 +1779,25 @@ const Dashboard = () => {
                 <div className="flex justify-center">
                   <WorkPressureGauge
                     value={dashboardData.teamWorkPressure}
-                    maxValue={150}
+                    maxValue={200}
                     size={180}
                     title="Carico Team Totale"
                   />
                 </div>
                 <div className="mt-4 text-center text-sm text-gray-600">
-                  <div>Ore totali: {dashboardData.totalTeamHours}</div>
+                  <div>Allocazione ore: {dashboardData.totalTeamHours.toFixed(1)}</div>
+                  <div>Ore lavorative disponibili: {dashboardData.totalTeamWorkHours.toFixed(1)}</div>
                   <div>Progetti totali: {dashboardData.totalTeamProjects}</div>
                   <div className="text-xs mt-2 text-gray-500">
-                    <div>Pressione calcolata su:</div>
-                    <div>8h/giorno × 5 giorni/sett. × {dashboardData.teamMembers.length} membri</div>
+                    <div className="text-sm font-bold text-gray-700 mb-1">
+                      {(() => {
+                        const hoursPerPerson = dashboardData.totalTeamWorkHours / dashboardData.teamMembers.length;
+                        const exactResources = dashboardData.totalTeamHours / hoursPerPerson;
+                        const requiredResources = Math.ceil(exactResources * 2) / 2; // Arrotonda a 0.5
+                        return `${requiredResources.toFixed(1)}/${dashboardData.teamMembers.length} risorse necessarie`;
+                      })()}
+                    </div>
+                    <div>Pressione calcolata su: 8h/giorno × 5 giorni/sett. × {dashboardData.teamMembers.length} membri</div>
                     <div>nel periodo {dashboardData.timeline[0]?.month} - {dashboardData.timeline[dashboardData.timeline.length - 1]?.month}</div>
                   </div>
                 </div>
@@ -1633,7 +1882,7 @@ const Dashboard = () => {
                                       {stream.stream}
                                     </div>
                                     <div className="text-xs text-gray-500">
-                                      {stream.hours}h • {stream.projects} progetti
+                                      {stream.hours.toFixed(1)}h • {stream.projects} progetti
                                     </div>
                                   </div>
                                 </div>
