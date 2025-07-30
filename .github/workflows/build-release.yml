@@ -39,11 +39,20 @@ jobs:
         
     - name: List build files (debug)
       working-directory: people-dashboard
+      shell: pwsh
       run: |
-        echo "=== Contents of dist folder ==="
-        ls -la dist/ || echo "No dist folder found"
-        echo "=== Looking for executable files ==="
-        find dist/ -name "*.exe" -o -name "*.msi" -o -name "*.zip" || echo "No executable files found"
+        Write-Output "=== Contents of dist folder ==="
+        if (Test-Path "dist") {
+          Get-ChildItem -Path "dist" -Recurse | Select-Object Name, Length, FullName
+        } else {
+          Write-Output "No dist folder found"
+        }
+        Write-Output "=== Looking for executable files ==="
+        if (Test-Path "dist") {
+          Get-ChildItem -Path "dist" -Recurse -Include "*.exe", "*.msi", "*.zip" | Select-Object Name, Length, FullName
+        } else {
+          Write-Output "No executable files found"
+        }
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
