@@ -10,7 +10,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Commentate temporaneamente le altre piattaforme - focus su Windows
+        os: [windows-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -21,15 +23,14 @@ jobs:
         node-version: '18'
         
     - name: Install dependencies
-      run: |
-        cd people-dashboard
-        npm ci
+      working-directory: people-dashboard
+      run: npm ci
         
     - name: Build Electron app
+      working-directory: people-dashboard
       run: |
-        cd people-dashboard
         npm run build
-        npm run electron:build
+        npm run electron:dist
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
