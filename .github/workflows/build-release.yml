@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
 
+# Aggiunti permessi per creare release
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -47,21 +52,31 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       
+    - name: List downloaded files (debug)
+      run: |
+        echo "=== Current directory ==="
+        pwd
+        echo "=== All files ==="
+        find . -type f -name "*.exe" -o -name "*.msi" -o -name "*.zip" || echo "No build files found"
+        ls -la || echo "No files in directory"
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          build-*/People Dashboard*
+          **/*.exe
+          **/*.msi
+          **/*.zip
         body: |
-          ## 🚀 Release Notes
+          ## 🚀 Team Dashboard Release
           
-          Versione automatica build da GitHub Actions.
+          Build automatico da GitHub Actions per Windows.
           
           ### 📦 Download
-          - **Windows**: People Dashboard Setup.exe
-          - **macOS**: People Dashboard.dmg  
-          - **Linux**: People Dashboard.AppImage
+          - **Windows**: Eseguibile per Windows
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
