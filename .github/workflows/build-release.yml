@@ -37,11 +37,23 @@ jobs:
         npm run build
         npm run electron:dist
         
+    - name: List build files (debug)
+      working-directory: people-dashboard
+      run: |
+        echo "=== Contents of dist folder ==="
+        ls -la dist/ || echo "No dist folder found"
+        echo "=== Looking for executable files ==="
+        find dist/ -name "*.exe" -o -name "*.msi" -o -name "*.zip" || echo "No executable files found"
+        
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.os }}
-        path: people-dashboard/dist/downloads/*
+        path: |
+          people-dashboard/dist/*.exe
+          people-dashboard/dist/*.msi
+          people-dashboard/dist/*.zip
+        if-no-files-found: warn
         
   release:
     needs: build
