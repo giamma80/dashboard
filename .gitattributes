@@ -1,0 +1,9 @@
+# Git LFS tracking per file di build Electron
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.dmg filter=lfs diff=lfs merge=lfs -text
+*.AppImage filter=lfs diff=lfs merge=lfs -text
+
+# File grandi di Electron
+people-dashboard/node_modules/electron/dist/** filter=lfs diff=lfs merge=lfs -text
+people-dashboard/dist/downloads/** filter=lfs diff=lfs merge=lfs -text
