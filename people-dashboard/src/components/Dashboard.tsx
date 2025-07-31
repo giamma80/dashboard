@@ -834,7 +834,11 @@ const Dashboard = () => {
     
     // Calcola totali team
     const totalTeamHours = Math.round(teamMembers.reduce((sum, member) => sum + member.totalHours, 0) * 10) / 10; // Arrotonda a 1 cifra decimale
-    const totalTeamProjects = teamMembers.reduce((sum, member) => sum + member.totalProjects, 0);
+    
+    // Calcola progetti unici invece di sommare per membro (evita duplicati per progetti multi-membro)
+    const uniqueProjectNames = new Set(dateFilteredProjects.map(project => project.name));
+    const totalTeamProjects = uniqueProjectNames.size;
+    
     const totalTeamWorkHours = teamMembers.length * finalAvailableHours;
     const teamWorkPressure = Math.min((totalTeamHours / totalTeamWorkHours) * 100, 200);
 
@@ -904,15 +908,39 @@ const Dashboard = () => {
       effectiveHours: Math.round(calculateProjectHoursInPeriod(project, startFilterDate, endFilterDate) * 10) / 10 // Arrotonda a 1 cifra decimale
     }));
 
-    const topProjects = projectsWithEffectiveHours
-      .sort((a, b) => b.effectiveHours - a.effectiveHours)
+    // Raggruppa progetti per nome e somma le ore per evitare duplicati
+    const projectsGroupedByName = projectsWithEffectiveHours.reduce((acc, project) => {
+      const projectName = project.name;
+      if (!acc[projectName]) {
+        acc[projectName] = {
+          name: projectName,
+          totalHours: 0,
+          streams: new Set<string>(),
+          members: new Set<string>(),
+          dominantStream: project.stream // Stream del primo progetto con questo nome
+        };
+      }
+      acc[projectName].totalHours += project.effectiveHours;
+      acc[projectName].streams.add(project.stream);
+      acc[projectName].members.add(project.teamMember);
+      return acc;
+    }, {} as Record<string, { 
+      name: string; 
+      totalHours: number; 
+      streams: Set<string>; 
+      members: Set<string>; 
+      dominantStream: string 
+    }>);
+
+    const topProjects = Object.values(projectsGroupedByName)
+      .sort((a, b) => b.totalHours - a.totalHours)
       .slice(0, 5)
       .map(project => ({
         name: project.name,
-        hours: project.effectiveHours,
-        stream: project.stream,
-        member: project.teamMember,
-        color: STREAM_COLORS[project.stream] || STREAM_COLORS.default
+        hours: Math.round(project.totalHours * 10) / 10, // Arrotonda a 1 cifra decimale
+        stream: project.dominantStream,
+        member: project.members.size > 1 ? `${project.members.size} membri` : Array.from(project.members)[0],
+        color: STREAM_COLORS[project.dominantStream] || STREAM_COLORS.default
       }));
 
     return {
@@ -2459,18 +2487,21 @@ const Dashboard = () => {
                     </h4>
                     <div className="space-y-2">
                       {(dashboardData.topProjects || []).map((project, index) => (
-                        <div key={index} className="flex items-center justify-between">
+                        <div key={`project-${project.name}-${index}`} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-gray-500 w-4">#{index + 1}</span>
                             <div 
                               className="w-2 h-2 rounded-full" 
                               style={{ backgroundColor: project.color }}
                             ></div>
-                            <span className="text-sm text-gray-700 truncate max-w-[100px]" title={project.name}>
+                            <span 
+                              className="text-sm text-gray-700 truncate max-w-[100px]" 
+                              title={`${project.name}\nStream: ${project.stream}\nMembri: ${project.member}`}
+                            >
                               {project.name}
                             </span>
                           </div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900" title={`${project.hours.toFixed(1)} ore totali`}>
                             {project.hours.toFixed(1)}h
                           </div>
                         </div>

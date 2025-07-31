@@ -42,11 +42,14 @@ La dashboard consente di:
 - **Grafici a Torta**: Distribuzione di stati, priorità, stream e tipi di progetto
 - **Tabelle Ordinabili**: Lista membri del team con sorting multiplo
 
-### 🔍 Sistema di Filtri
-- **Filtri Multi-Select**: Selezione multipla di membri e stream
+### 🔍 Sistema di Filtri Avanzato
+- **Filtri Multi-Select**: Selezione multipla di membri, stream, status e tipi
+- **FilterManager**: Sistema centralizzato per gestione errori e suggerimenti intelligenti  
 - **Filtri Temporali**: Range di date personalizzabile e quarter predefiniti
+- **Toast Notifications**: Messaggi informativi per conflitti filtri e suggerimenti
 - **Chip di Quarter**: Selezione rapida per trimestri
 - **Reset Filtri**: Pulizia rapida di tutti i filtri applicati
+- **Gestione Errori Intelligente**: Suggerimenti automatici quando i filtri non producono risultati
 
 ### 📁 Gestione File CSV
 - **Caricamento Drag & Drop**: Interfaccia intuitiva per il caricamento
@@ -54,7 +57,14 @@ La dashboard consente di:
 - **Report Errori**: Notifiche dettagliate per progetti non validi
 - **Toast Notifications**: Feedback visivo per operazioni e errori
 
-### 🎨 Interfaccia Utente
+### � Accuratezza e Affidabilità Dati
+- **Progetti Unici**: Conteggio corretto dei progetti evitando duplicati multi-membro
+- **Top 5 Preciso**: Classifica progetti per ore aggregate senza duplicazioni
+- **Aggregazione Intelligente**: Progetti raggruppati per nome con somma ore totali
+- **Multi-Team Support**: Gestione ottimale progetti con più membri coinvolti
+- **Consistenza Dati**: Logica uniforme tra diverse visualizzazioni
+
+### �🎨 Interfaccia Utente
 - **Design Responsivo**: Ottimizzato per desktop, tablet e mobile
 - **Tema Moderno**: Design pulito con colori corporate
 - **Animazioni Fluide**: Transizioni smooth per better UX
@@ -179,6 +189,65 @@ dashboard/
 ---
 
 # 📋 Changelog
+
+## [v2.1.1] - 2025-07-31
+### 🐛 **CRITICAL FIXES - PROGETTI DUPLICATI**
+- **✅ Fix Critico**: Risolto problema progetti duplicati in "Top 5 Progetti"
+- **✅ Fix Critico**: Risolto problema conteggio "Progetti Totali" errato
+- **✅ Aggregazione Intelligente**: Progetti raggruppati per nome con somma ore
+- **✅ Conteggio Accurato**: Progetti unici contati correttamente (non per membro)
+- **✅ Tooltip Migliorati**: Informazioni aggiuntive sui progetti multi-membro
+
+### 🔧 **Miglioramenti Logica**
+- **Top Progetti**: Ora raggruppa per nome progetto evitando duplicati
+- **Progetti Totali**: Utilizza Set di nomi unici invece di somma per membro
+- **Multi-Membro**: Gestione corretta progetti con più membri del team
+- **Visualizzazione**: Tooltip con dettagli stream e membri coinvolti
+- **Consistency**: Fix applicato sia in Dashboard.tsx che NewDashboard.tsx
+
+### 🛠️ **Modifiche Tecniche**
+- **Grouping Logic**: Implementato reduce per raggruppamento progetti per nome
+- **Unique Count**: Sostituito reduce sum con Set.size per conteggio unico
+- **Dominant Stream**: Utilizzato stream del primo progetto per colore
+- **Member Display**: "X membri" quando progetto ha più di un membro
+- **Key Optimization**: Chiavi React migliorate per evitare re-render inutili
+
+### 📋 **Risultati**
+- **🎯 Dati Accurati**: Conteggi e classifiche ora riflettono progetti reali
+- **📊 Top 5 Corretto**: Lista progetti più impegnativi senza duplicati
+- **🔢 Totali Giusti**: Numero progetti totali ora corretto
+- **👥 Multi-Team**: Gestione migliorata progetti cross-team
+
+---
+
+## [v2.1.0] - 2025-07-31
+### 🎉 **MAJOR UX IMPROVEMENTS - FILTRI AVANZATI**
+- **✅ Fix Critico UX**: Risolto problema reset dashboard con filtri vuoti
+- **✅ Filtri Status e Type**: Aggiunti nuovi filtri con stessa UI degli esistenti
+- **✅ FilterManager Class**: Sistema centralizzato per gestione filtri intelligente
+- **✅ Toast Intelligenti**: Messaggi informativi per errori e suggerimenti filtri
+- **✅ Mantenimento Stato**: I filtri rimangono attivi anche con risultati vuoti
+
+### 🔧 **Miglioramenti Critici**
+- **Comportamento UX**: Dashboard non si resetta più alla pagina upload CSV
+- **Gestione Errori**: Sostituiti throw con gestione graziosa dei risultati vuoti
+- **Suggerimenti Intelligenti**: Sistema suggerisce soluzioni per filtri incompatibili
+- **Debugging Avanzato**: Logging dettagliato per tracciare comportamento filtri
+- **Robustezza Sistema**: Eliminati crash e reset indesiderati
+
+### 🛠️ **Modifiche Tecniche**
+- **processCSV Interface**: Aggiunto supporto per errori e suggerimenti
+- **useEffect Dependencies**: Inclusi tutti i tipi di filtro nelle dipendenze
+- **hasData Logic**: Distinta gestione tra "nessun CSV" vs "filtri vuoti"
+- **FilterResult Types**: Nuove interfacce per gestione errori strutturata
+
+### 📋 **Risultati**
+- **🚀 UX Migliorata**: Esperienza utente fluida senza reset indesiderati
+- **🎯 Filtri Potenti**: Sistema filtri più robusto e informativo
+- **💡 Feedback Utile**: Suggerimenti automatici per risolvere problemi filtri
+- **🔧 Sistema Stabile**: Architettura più robusta per gestione errori
+
+---
 
 ## [v1.7] - 2025-07-30
 ### 🎉 **RELEASE COMPLETA - CI/CD FUNZIONANTE!**

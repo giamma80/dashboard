@@ -279,7 +279,11 @@ const Dashboard = () => {
     
     // Calcola totali team
     const totalTeamHours = teamMembers.reduce((sum, member) => sum + member.totalHours, 0);
-    const totalTeamProjects = teamMembers.reduce((sum, member) => sum + member.totalProjects, 0);
+    
+    // Calcola progetti unici invece di sommare per membro (evita duplicati per progetti multi-membro)
+    const uniqueProjectNames = new Set(projects.map(project => project.name));
+    const totalTeamProjects = uniqueProjectNames.size;
+    
     const totalTeamWorkHours = teamMembers.length * ANNUAL_WORK_HOURS;
     const teamWorkPressure = (totalTeamHours / totalTeamWorkHours) * 100;
 
