@@ -43,10 +43,10 @@ Accedi subito alla dashboard online: **[https://giamma80.github.io/dashboard/](h
 ### 💻 **App Desktop per Windows**
 Scarica l'applicazione desktop dalla [pagina delle release](https://github.com/giamma80/dashboard/releases/latest):
 
-- **🔧 People.Dashboard.Setup.2.3.3.exe** - Installer completo con wizard
-- **📦 People.Dashboard.2.3.3.Portable.x64.exe** - Versione portable x64 (consigliata)
-- **📦 People.Dashboard.2.3.3.Portable.ia32.exe** - Versione portable x86 (PC vecchi)
-- **📦 People.Dashboard.2.3.3.Portable.exe** - Versione portable universale
+- **🔧 People.Dashboard.Setup.2.3.4.exe** - Installer completo con wizard
+- **📦 People.Dashboard.2.3.4.Portable.x64.exe** - Versione portable x64 (consigliata)
+- **📦 People.Dashboard.2.3.4.Portable.ia32.exe** - Versione portable x86 (PC vecchi)
+- **📦 People.Dashboard.2.3.4.Portable.exe** - Versione portable universale
 
 > 💡 **Consiglio**: Per uso occasionale usa la versione web, per uso quotidiano scarica l'app desktop portable.
 
@@ -483,6 +483,19 @@ Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettag
 ---
 
 ## 📋 Changelog (Sintetico)
+
+### v2.3.4 (2025-07-31) - 🧹 Git Cleanup & Repository Optimization
+
+#### 🗂️ **Repository Management**
+- **Removed build artifacts from git tracking** - `dist/` folders no longer tracked
+- **Enhanced .gitignore compliance** - Better separation between source and build files  
+- **Added portability verification script** - New `check-portability.js` for build validation
+- **Repository cleanup** - Reduced repo size by removing unnecessary build files
+
+#### 🔧 **Development Improvements**
+- **Better git workflow** - Clean separation between development and build assets
+- **Enhanced build verification** - Automated portability checks for releases
+- **Improved repository hygiene** - Following best practices for git management
 
 ### v2.3.3 (2025-07-31) - 🧹 Codebase Cleanup & Chart Improvements
 - ✅ **Grafici a torta migliorati** - Percentuali visibili all'interno delle fette
