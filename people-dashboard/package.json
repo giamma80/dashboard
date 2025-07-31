@@ -19,7 +19,8 @@
     "electron:dist-win": "npm run build:electron && electron-builder --publish=never --win",
     "copy-downloads": "node scripts/copy-downloads.js",
     "build:full": "npm run electron:dist-win && npm run copy-downloads && npm run build",
-    "release": "npm run build:full"
+    "release": "npm run build:full",
+    "check-portability": "node scripts/check-portability.cjs"
   },
   "dependencies": {
     "lucide-react": "^0.263.1",
@@ -58,7 +59,7 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "node_modules/**/*"
+      "package.json"
     ],
     "win": {
       "target": [
@@ -70,13 +71,26 @@
           ]
         },
         {
-          "target": "zip",
+          "target": "portable",
           "arch": [
             "x64",
             "ia32"
           ]
         }
-      ]
+      ],
+      "artifactName": "${productName}.${version}.Portable.${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "verifyUpdateCodeSignature": false
+    },
+    "portable": {
+      "artifactName": "${productName}.${version}.Portable.${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     },
     "publish": {
       "provider": "github",

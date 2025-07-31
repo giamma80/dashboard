@@ -170,7 +170,7 @@ export const useToast = () => {
     const newToast: ToastData = {
       ...toast,
       id,
-      duration: toast.duration || 5000, // 5 secondi default
+      duration: toast.duration || 10000, // 10 secondi default
     };
     
     setToasts(prev => [...prev, newToast]);

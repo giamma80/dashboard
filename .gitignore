@@ -69,3 +69,20 @@ jspm_packages/
 
 # Serverless directories
 .serverless
+
+# Electron build artifacts
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
+*.blockmap
+latest.yml
+builder-debug.yml
+builder-effective-config.yaml
+win-unpacked/
+win-ia32-unpacked/
+mac/
+mac-arm64/
+linux-unpacked/
