@@ -858,19 +858,19 @@ const Dashboard = () => {
                   <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                      <span>Wait: {dashboardData.status.Wait}</span>
+                      <span>Wait: {dashboardData.status.Wait} ({((dashboardData.status.Wait / dashboardData.totali.proposte) * 100).toFixed(1)}%)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 bg-green-500 rounded"></div>
-                      <span>Vinte: {dashboardData.status.Vinte}</span>
+                      <span>Vinte: {dashboardData.status.Vinte} ({((dashboardData.status.Vinte / dashboardData.totali.proposte) * 100).toFixed(1)}%)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 bg-red-500 rounded"></div>
-                      <span>Perse: {dashboardData.status.Perse}</span>
+                      <span>Perse: {dashboardData.status.Perse} ({((dashboardData.status.Perse / dashboardData.totali.proposte) * 100).toFixed(1)}%)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                      <span>Altro: {dashboardData.status.Altro}</span>
+                      <span>Altro: {dashboardData.status.Altro} ({((dashboardData.status.Altro / dashboardData.totali.proposte) * 100).toFixed(1)}%)</span>
                     </div>
                   </div>
                 </div>

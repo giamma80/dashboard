@@ -5,6 +5,7 @@ import DownloadSection from './DownloadSection';
 import { ToastContainer, useToast } from './Toast';
 import FileUploader from './FileUploader';
 import type { FileUploadResult, FileUploadError } from './FileUploader';
+import { StatusPieChart, PriorityPieChart, StreamPieChart, TypePieChart } from './PieChartCard';
 
 // Tipi per i nuovi dati
 interface ProjectData {
@@ -2897,133 +2898,10 @@ const Dashboard = () => {
 
             {/* Riga 5: Tutti i grafici a torta */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Status Distribution */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-blue-500" />
-                  Stati Progetti
-                </h4>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(dashboardData.statusDistribution).map(([status, count]) => ({
-                        name: status,
-                        value: count
-                      }))}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {Object.keys(dashboardData.statusDistribution).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend 
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-                      iconSize={8}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Priority Distribution */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-red-500" />
-                  Priorità Progetti
-                </h4>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(dashboardData.priorityDistribution).map(([priority, count]) => ({
-                        name: priority,
-                        value: count
-                      }))}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {Object.keys(dashboardData.priorityDistribution).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={`hsl(${index * 60 + 20}, 70%, 60%)`} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend 
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-                      iconSize={8}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Stream Distribution */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-purple-500" />
-                  Distribuzione Stream
-                </h4>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={(dashboardData.streamDistributionForCharts || []).map(stream => ({
-                        name: stream.stream,
-                        value: stream.projects
-                      }))}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {(dashboardData.streamDistributionForCharts || []).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend 
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-                      iconSize={8}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Type Distribution */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-orange-500" />
-                  Tipi Progetti
-                </h4>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(dashboardData.typeDistribution).map(([type, count]) => ({
-                        name: type,
-                        value: count
-                      }))}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {Object.keys(dashboardData.typeDistribution).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={`hsl(${index * 80 + 40}, 70%, 60%)`} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend 
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-                      iconSize={8}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <StatusPieChart data={dashboardData.statusDistribution} />
+              <PriorityPieChart data={dashboardData.priorityDistribution} />
+              <StreamPieChart data={dashboardData.streamDistributionForCharts || []} />
+              <TypePieChart data={dashboardData.typeDistribution} />
             </div>
 
             {/* Team Members Section - sotto tutto */}
