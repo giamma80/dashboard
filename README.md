@@ -9,19 +9,25 @@
 
 🌐 **[PROVA LA DEMO LIVE](https://giamma80.github.io/dashboard/)** | 📦 **[SCARICA L'APP DESKTOP](https://github.com/giamma80/dashboard/releases/latest)**
 
-## 🚀 Novità v2.3.0 - Supporto Excel Completo!
+## 🚀 Novità v2.3.2 - Portabilità Massima!
 
-### 📗 **Excel Nativo (.xlsx/.xls)**
+### 🎯 **App Desktop Truly Portable**
+- ✅ **Zero dipendenze** - Funziona senza Node.js, npm o runtime
+- ✅ **Sicurezza enterprise** - Sandbox Electron con context isolation
+- ✅ **Debugging integrato** - Preload script per diagnostica avanzata
+- ✅ **Multi-architettura** - Supporto ottimizzato x64 e x86
+
+### 📗 **Excel Nativo (.xlsx/.xls)**  
 - ✅ **Carica file Excel direttamente** - No più conversioni manuali
 - ✅ **Supporto .xlsx e .xls** - Formati moderni e legacy
 - ✅ **Conversione automatica** - Excel → CSV interno in tempo reale
 - ✅ **Drag & Drop unificato** - Stessa interfaccia per CSV e Excel
 
 ### 🎯 **Benefici Immediati**
+- **⚡ Deploy Anywhere**: Installa su qualsiasi PC Windows
+- **🔒 Enterprise Security**: Sandbox sicuro per ambiente aziendale  
 - **⚡ Produttività**: Elimina step di export CSV da Excel
-- **💼 Enterprise Ready**: Integrazione diretta con file aziendali
-- **🔄 Workflow**: Dalla creazione Excel all'analisi in un click
-- **👥 Team**: Condivisione diretta file Excel senza conversioni[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+- **💼 Enterprise Ready**: Integrazione diretta con file aziendali[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://giamma80.github.io/dashboard/)
 [![Latest Release](https://img.shields.io/github/v/release/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
 
@@ -37,11 +43,12 @@ Accedi subito alla dashboard online: **[https://giamma80.github.io/dashboard/](h
 ### 💻 **App Desktop per Windows**
 Scarica l'applicazione desktop dalla [pagina delle release](https://github.com/giamma80/dashboard/releases/latest):
 
-- **🔧 People.Dashboard.Setup.1.0.0.exe** - Installer completo (559 MB)
-- **📦 People.Dashboard-1.0.0-win.zip** - Versione portable x64 (231 MB)  
-- **📦 People.Dashboard-1.0.0-ia32-win.zip** - Versione portable x32 (486 MB)
+- **🔧 People.Dashboard.Setup.2.3.3.exe** - Installer completo con wizard
+- **📦 People.Dashboard.2.3.3.Portable.x64.exe** - Versione portable x64 (consigliata)
+- **📦 People.Dashboard.2.3.3.Portable.ia32.exe** - Versione portable x86 (PC vecchi)
+- **📦 People.Dashboard.2.3.3.Portable.exe** - Versione portable universale
 
-> 💡 **Consiglio**: Per uso occasionale usa la versione web, per uso quotidiano scarica l'app desktop.
+> 💡 **Consiglio**: Per uso occasionale usa la versione web, per uso quotidiano scarica l'app desktop portable.
 
 ## 🎯 Descrizione del Progetto
 
@@ -476,6 +483,20 @@ Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettag
 ---
 
 ## 📋 Changelog (Sintetico)
+
+### v2.3.3 (2025-07-31) - 🧹 Codebase Cleanup & Chart Improvements
+- ✅ **Grafici a torta migliorati** - Percentuali visibili all'interno delle fette
+- ✅ **Componenti centralizzati** - PieChartCard riutilizzabile per tutti i grafici
+- ✅ **Codebase pulito** - Eliminato NewDashboard.tsx (codice morto)
+- ✅ **Dimensioni ottimizzate** - Card torte più grandi per migliore leggibilità
+- ✅ **Architettura semplificata** - Logica unificata per tutti i pie charts
+
+### v2.3.2 (2025-07-31) - 🚀 Enhanced Electron Portability
+- ✅ **Portabilità migliorata** - App funziona senza Node.js/npm
+- ✅ **Security enhancement** - nodeIntegration disabilitata, contextIsolation attiva
+- ✅ **Preload script** per debugging e API sicure
+- ✅ **Build verification** script automatico per controllo qualità
+- ✅ **Cross-platform** supporto x64 e x86 ottimizzato
 
 ### v2.3.0 (2025-07-31) - 🎉 Excel Support
 - ✅ **Supporto Excel nativo** (.xlsx/.xls)
