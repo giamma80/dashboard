@@ -530,7 +530,7 @@ const Dashboard = () => {
   };
 
   // Funzione per processare i dati CSV
-  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[], statusFilters: string[], typeFilters: string[]): { data: DashboardData; errors: string[] } => {
+  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[], statusFilters: string[], typeFilters: string[]): { data: DashboardData; errors: string[]; suggestions?: FilterSuggestion[] } => {
     try {
       // Validazione input
       if (!csvContent || csvContent.trim() === '') {
@@ -600,55 +600,39 @@ const Dashboard = () => {
       }
 
       if (projects.length === 0) {
-        throw new Error('Nessun progetto valido trovato nel file CSV');
+        // Se non ci sono progetti validi nel CSV, ritorna dati vuoti invece di errore
+        console.warn('Nessun progetto valido trovato nel file CSV');
+        return {
+          data: emptyData,
+          errors: ['Nessun progetto valido trovato nel file CSV'],
+          suggestions: []
+        };
       }
 
       console.log(`Processati ${projects.length} progetti (${errors.length} errori ignorati)`);
 
-      // Validazione filtri
-      const validMemberFilters = memberFilters.filter(member => member && member.trim() !== '');
-      const validStreamFilters = streamFilters.filter(stream => stream && stream.trim() !== '');
-
-      // Applica filtro membri del team (se vuoto, mostra tutti)
-      const memberFilteredProjects = validMemberFilters.length > 0 
-        ? projects.filter(p => validMemberFilters.includes(p.teamMember))
-        : projects;
-
-      // Applica filtro stream (se vuoto, mostra tutti)
-      const filteredProjects = validStreamFilters.length > 0 
-        ? memberFilteredProjects.filter(p => validStreamFilters.includes(p.stream))
-        : memberFilteredProjects;
-
-      // Debug: Log dei risultati filtri
-      console.log('Filtri applicati:', {
-        memberFilters: validMemberFilters,
-        streamFilters: validStreamFilters,
-        totalProjects: projects.length,
-        afterMemberFilter: memberFilteredProjects.length,
-        afterStreamFilter: filteredProjects.length
+      // Usa FilterManager per gestire i filtri in modo centralizzato
+      const filterManager = new FilterManager(projects);
+      
+      const filterResult = filterManager.applyFilters({
+        members: memberFilters.filter(m => m && m.trim() !== ''),
+        streams: streamFilters.filter(s => s && s.trim() !== ''),
+        status: statusFilters.filter(s => s && s.trim() !== ''),
+        type: typeFilters.filter(t => t && t.trim() !== '')
       });
 
-      // Verifica se i filtri combinati hanno eliminato tutti i progetti
-      if (filteredProjects.length === 0 && (validMemberFilters.length > 0 || validStreamFilters.length > 0)) {
-        console.warn('I filtri combinati hanno eliminato tutti i progetti!');
-        
-        // Verifica quale filtro causa il problema
-        if (validMemberFilters.length > 0 && memberFilteredProjects.length === 0) {
-          throw new Error(`Nessun progetto trovato per i membri selezionati: ${validMemberFilters.join(', ')}`);
-        }
-        
-        if (validStreamFilters.length > 0 && validMemberFilters.length > 0) {
-          // Controlla se il membro ha progetti in altri stream
-          const memberProjects = projects.filter(p => validMemberFilters.includes(p.teamMember));
-          const memberStreams = [...new Set(memberProjects.map(p => p.stream))];
-          
-          if (memberStreams.length > 0) {
-            throw new Error(`Il membro "${validMemberFilters[0]}" non ha progetti nello stream "${validStreamFilters[0]}". Stream disponibili: ${memberStreams.join(', ')}`);
-          }
-        }
-        
-        throw new Error(`Nessun progetto trovato con i filtri combinati. Prova a rimuovere alcuni filtri.`);
-      }
+      // Se ci sono errori di filtro, continua con progetti vuoti ma mantieni gli errori
+      const filteredProjects = filterResult.projects;
+      const filterErrors = filterResult.errors;
+      const filterSuggestions = filterResult.suggestions;
+
+      // Debug: Log dei risultati filtri
+      console.log('Filtri applicati tramite FilterManager:', {
+        totalProjects: projects.length,
+        filteredProjects: filteredProjects.length,
+        filterErrors: filterErrors.length,
+        filterSuggestions: filterSuggestions.length
+      });
 
     // Applica filtro data
     const startFilterDate = new Date(dateFilter.start);
@@ -946,11 +930,16 @@ const Dashboard = () => {
         streamDistributionForCharts, // Per i grafici: con aggregazione "Altri"
         topProjects
       },
-      errors
+      errors: filterErrors,
+      suggestions: filterSuggestions
     };
     } catch (error) {
       console.error('Errore nel processamento CSV:', error);
-      throw new Error(`Errore nel processamento dei dati CSV: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+      return {
+        data: emptyData,
+        errors: [`Errore nel processamento dei dati CSV: ${error instanceof Error ? error.message : 'errore sconosciuto'}`],
+        suggestions: []
+      };
     }
   };
 
@@ -989,66 +978,85 @@ const Dashboard = () => {
   
   // Re-processa i dati quando cambiano i filtri
   useEffect(() => {
+    console.log('=== useEffect triggered ===', {
+      csvData: csvData ? 'present' : 'null',
+      dateRange,
+      selectedTeamMembers,
+      selectedStreams,
+      selectedStatus,
+      selectedType
+    });
+    
     if (csvData) {
       
       try {
-        const result = processCSV(csvData, dateRange, selectedTeamMembers, selectedStreams);
+        console.log('Chiamando processCSV con filtri:', {
+          dateRange,
+          memberFilters: selectedTeamMembers,
+          streamFilters: selectedStreams,
+          statusFilters: selectedStatus,
+          typeFilters: selectedType
+        });
+        
+        const result = processCSV(csvData, dateRange, selectedTeamMembers, selectedStreams, selectedStatus, selectedType);
+        
+        console.log('Risultato processCSV:', {
+          dataReceived: !!result.data,
+          errorsCount: result.errors?.length || 0,
+          suggestionsCount: result.suggestions?.length || 0
+        });
+        
         setDashboardData(result.data);
         setError(null);
-      } catch (err) {
-        console.error('Errore nel ri-processamento dati:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Errore sconosciuto nel processamento dei dati';
         
-        // Per errori specifici sui filtri, mostra un messaggio più dettagliato con toast
-        if (errorMessage.includes('Stream disponibili:') || errorMessage.includes('non ha progetti nello stream')) {
-          // Mostra toast per errori di filtri incompatibili
-          if (errorMessage.includes('Stream disponibili:')) {
-            const streamPart = errorMessage.split('Stream disponibili: ')[1];
+        // Gestisci errori/suggerimenti dai filtri
+        if (result.errors && result.errors.length > 0) {
+          result.errors.forEach(error => {
             showToast({
               type: 'warning',
-              title: 'Filtri incompatibili',
-              message: `Il membro selezionato non ha progetti nello stream scelto. Stream disponibili: ${streamPart}`,
-              duration: 8000,
-              action: {
-                label: 'Rimuovi filtro stream',
-                onClick: () => setSelectedStreams([])
-              }
-            });
-          } else {
-            showToast({
-              type: 'warning', 
-              title: 'Filtri incompatibili',
-              message: errorMessage,
+              title: 'Filtri non compatibili',
+              message: error,
               duration: 6000
             });
-          }
-          
-          // Non fare fallback automatico per questi errori, lascia che l'utente scelga
-          try {
-            const fallbackResult = processCSV(csvData, dateRange, selectedTeamMembers, []); // Rimuovi solo filtro stream
-            setDashboardData(fallbackResult.data);
-          } catch (fallbackError) {
-            // Se anche senza stream filter non funziona, rimuovi tutti i filtri
-            try {
-              const fullFallbackResult = processCSV(csvData, dateRange, [], []);
-              setDashboardData(fullFallbackResult.data);
-            } catch (finalError) {
-              setError('Errore critico nel processamento dei dati. Ricaricare la pagina.');
-            }
-          }
-        } else {
-          // Per altri errori, usa il fallback standard
-          
-          try {
-            const fallbackResult = processCSV(csvData, dateRange, [], []);
-            setDashboardData(fallbackResult.data);
-          } catch (fallbackError) {
-            setError('Errore critico nel processamento dei dati. Ricaricare la pagina.');
-          }
+          });
         }
+        
+        // Mostra suggerimenti se disponibili
+        if (result.suggestions && result.suggestions.length > 0) {
+          result.suggestions.forEach(suggestion => {
+            showToast({
+              type: 'info',
+              title: 'Suggerimento',
+              message: suggestion.message,
+              duration: 8000
+            });
+          });
+        }
+        
+      } catch (err) {
+        console.error('=== ERRORE CRITICO nel ri-processamento dati ===', {
+          error: err,
+          errorMessage: err instanceof Error ? err.message : 'Errore sconosciuto',
+          errorStack: err instanceof Error ? err.stack : 'No stack'
+        });
+        
+        const errorMessage = err instanceof Error ? err.message : 'Errore sconosciuto nel processamento dei dati';
+        
+        // Se processCSV lancia ancora errori, significa che c'è un problema critico
+        showToast({
+          type: 'error',
+          title: 'Errore critico',
+          message: `Errore critico: ${errorMessage}`,
+          duration: 10000
+        });
+        
+        // NON facciamo fallback automatico, manteniamo i dati esistenti
+        console.log('Mantenendo dati esistenti, non facciamo fallback automatico');
       }
+    } else {
+      console.log('csvData non presente, saltando processamento');
     }
-  }, [csvData, dateRange, selectedTeamMembers, selectedStreams]);
+  }, [csvData, dateRange, selectedTeamMembers, selectedStreams, selectedStatus, selectedType]);
 
   // Funzione per gestire il clic sulla timeline
   const handleTimelineClick = (data: any) => {
@@ -1107,10 +1115,12 @@ const Dashboard = () => {
         // Reset filtri quando si carica un nuovo file
         setSelectedTeamMembers([]);
         setSelectedStreams([]);
+        setSelectedStatus([]);
+        setSelectedType([]);
         setSelectedQuarter('');
         
         console.log('Processamento nuovo file CSV...');
-        const result = processCSV(csvContent, dateRange, [], []);
+        const result = processCSV(csvContent, dateRange, [], [], [], []);
         
         setDashboardData(result.data);
         setCsvData(csvContent);
@@ -1320,7 +1330,7 @@ const Dashboard = () => {
     };
 
     const clearAllFilters = () => {
-      const hadFilters = selectedTeamMembers.length > 0 || selectedStreams.length > 0 || selectedQuarter !== '';
+      const hadFilters = selectedTeamMembers.length > 0 || selectedStreams.length > 0 || selectedStatus.length > 0 || selectedType.length > 0 || selectedQuarter !== '';
       
       setDateRange({
         start: '2025-04-01',
@@ -1329,6 +1339,8 @@ const Dashboard = () => {
       setSelectedTeamMembers([]);
       setSelectedQuarter('');
       setSelectedStreams([]);
+      setSelectedStatus([]);
+      setSelectedType([]);
       
       if (hadFilters) {
         showToast({
@@ -1398,8 +1410,68 @@ const Dashboard = () => {
       }
     };
 
+    // Ottieni tutti gli status unici dai dati CSV
+    const getAllStatus = (): string[] => {
+      try {
+        if (!csvData) return [];
+        const lines = csvData.trim().split('\n');
+        
+        if (lines.length < 2) return [];
+        
+        const statuses = new Set<string>();
+        
+        lines.slice(1).forEach((line, index) => {
+          try {
+            const values = line.split(';');
+            const status = values[5]?.trim(); // Status è nella colonna 5
+            if (status && status !== '') {
+              statuses.add(status);
+            }
+          } catch (error) {
+            console.warn(`Errore nel parsing status alla riga ${index + 2}:`, error);
+          }
+        });
+        
+        return Array.from(statuses).sort();
+      } catch (error) {
+        console.error('Errore nel recupero status:', error);
+        return [];
+      }
+    };
+
+    // Ottieni tutti i types unici dai dati CSV
+    const getAllTypes = (): string[] => {
+      try {
+        if (!csvData) return [];
+        const lines = csvData.trim().split('\n');
+        
+        if (lines.length < 2) return [];
+        
+        const types = new Set<string>();
+        
+        lines.slice(1).forEach((line, index) => {
+          try {
+            const values = line.split(';');
+            const type = values[11]?.trim(); // Type è nella colonna 11
+            if (type && type !== '') {
+              types.add(type);
+            }
+          } catch (error) {
+            console.warn(`Errore nel parsing type alla riga ${index + 2}:`, error);
+          }
+        });
+        
+        return Array.from(types).sort();
+      } catch (error) {
+        console.error('Errore nel recupero types:', error);
+        return [];
+      }
+    };
+
     const allMembers = getAllMembers();
     const allStreams = getAllStreams();
+    const allStatus = getAllStatus();
+    const allTypes = getAllTypes();
 
     // Toggle member selection
     const toggleMember = (member: string) => {
@@ -1448,6 +1520,42 @@ const Dashboard = () => {
       }
     };
 
+    // Toggle status selection
+    const toggleStatus = (status: string) => {
+      try {
+        if (!status || status.trim() === '') return;
+        
+        setSelectedStatus(prev => {
+          const updated = prev.includes(status) 
+            ? prev.filter(s => s !== status)
+            : [...prev, status];
+          
+          console.log('Status selezionati aggiornati:', updated);
+          return updated;
+        });
+      } catch (error) {
+        console.error('Errore nel toggle status:', error);
+      }
+    };
+
+    // Toggle type selection
+    const toggleType = (type: string) => {
+      try {
+        if (!type || type.trim() === '') return;
+        
+        setSelectedType(prev => {
+          const updated = prev.includes(type) 
+            ? prev.filter(t => t !== type)
+            : [...prev, type];
+          
+          console.log('Types selezionati aggiornati:', updated);
+          return updated;
+        });
+      } catch (error) {
+        console.error('Errore nel toggle type:', error);
+      }
+    };
+
     // Select/Deselect all members
     const toggleAllMembers = () => {
       try {
@@ -1479,6 +1587,40 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error('Errore nel toggle tutti gli stream:', error);
+      }
+    };
+
+    // Select/Deselect all status
+    const toggleAllStatus = () => {
+      try {
+        const allValidStatus = allStatus.filter(s => s && s.trim() !== '');
+        
+        if (selectedStatus.length === allValidStatus.length) {
+          setSelectedStatus([]);
+          console.log('Deselezionati tutti gli status');
+        } else {
+          setSelectedStatus([...allValidStatus]);
+          console.log('Selezionati tutti gli status:', allValidStatus.length);
+        }
+      } catch (error) {
+        console.error('Errore nel toggle tutti gli status:', error);
+      }
+    };
+
+    // Select/Deselect all types
+    const toggleAllTypes = () => {
+      try {
+        const allValidTypes = allTypes.filter(t => t && t.trim() !== '');
+        
+        if (selectedType.length === allValidTypes.length) {
+          setSelectedType([]);
+          console.log('Deselezionati tutti i types');
+        } else {
+          setSelectedType([...allValidTypes]);
+          console.log('Selezionati tutti i types:', allValidTypes.length);
+        }
+      } catch (error) {
+        console.error('Errore nel toggle tutti i types:', error);
       }
     };
 
@@ -1635,6 +1777,48 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Dropdown Status */}
+            <div className="min-w-60">
+              {allStatus.length > 0 ? (
+                <>
+                  <MultiSelectDropdown
+                    title="Status"
+                    selectedItems={selectedStatus}
+                    allItems={allStatus}
+                    onToggleItem={toggleStatus}
+                    onToggleAll={toggleAllStatus}
+                    isOpen={isStatusDropdownOpen}
+                    setIsOpen={setIsStatusDropdownOpen}
+                  />
+                </>
+              ) : (
+                <div className="w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500">
+                  Nessun status disponibile
+                </div>
+              )}
+            </div>
+
+            {/* Dropdown Type */}
+            <div className="min-w-60">
+              {allTypes.length > 0 ? (
+                <>
+                  <MultiSelectDropdown
+                    title="Type"
+                    selectedItems={selectedType}
+                    allItems={allTypes}
+                    onToggleItem={toggleType}
+                    onToggleAll={toggleAllTypes}
+                    isOpen={isTypeDropdownOpen}
+                    setIsOpen={setIsTypeDropdownOpen}
+                  />
+                </>
+              ) : (
+                <div className="w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500">
+                  Nessun type disponibile
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Pulsante Reset Range */}
@@ -1667,7 +1851,7 @@ const Dashboard = () => {
         </div>
 
         {/* Pulsante Pulisci tutti i filtri */}
-        {(selectedTeamMembers.length > 0 || selectedQuarter || selectedStreams.length > 0 || isMonthFilter()) && (
+        {(selectedTeamMembers.length > 0 || selectedQuarter || selectedStreams.length > 0 || selectedStatus.length > 0 || selectedType.length > 0 || isMonthFilter()) && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <button
               onClick={clearAllFilters}
@@ -2053,6 +2237,7 @@ const Dashboard = () => {
   };
 
   const hasData = dashboardData && (dashboardData.totalTeamHours > 0 || dashboardData.teamMembers.length > 0);
+  const hasLoadedCsv = !!csvData; // Verifica se abbiamo caricato un CSV
 
   if (isLoading) {
     return (
@@ -2134,7 +2319,7 @@ const Dashboard = () => {
           )}
         </div>
 
-        {!hasData ? (
+        {!hasLoadedCsv ? (
           // Stato vuoto
           <div className="text-center py-12">
             <div className="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto">
@@ -2161,6 +2346,14 @@ const Dashboard = () => {
               <p className="text-center text-gray-500 text-sm mt-3">
                 Carica un file CSV per visualizzare progetti, timeline e allocazioni del team
               </p>
+            </div>
+          </div>
+        ) : !dashboardData ? (
+          // Stato di caricamento quando CSV è presente ma dashboardData non ancora caricato
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Elaborazione dati in corso...</p>
             </div>
           </div>
         ) : (
