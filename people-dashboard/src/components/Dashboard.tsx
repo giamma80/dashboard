@@ -1258,7 +1258,13 @@ const Dashboard = () => {
 
   // Handler per il nuovo FileUploader atomico
   const handleNewFileLoad = (result: FileUploadResult) => {
-    console.log('File caricato tramite FileUploader:', result.fileName);
+    console.log(`File caricato tramite FileUploader: ${result.fileName} (${result.fileType.toUpperCase()})`);
+    
+    // Debug per Excel
+    if (result.fileType === 'xlsx' || result.fileType === 'xls') {
+      console.log('Excel content preview:', result.content.substring(0, 500));
+      console.log('Excel lines count:', result.content.split('\n').length);
+    }
     
     // Reset filtri quando si carica un nuovo file
     setSelectedTeamMembers([]);
@@ -1291,7 +1297,7 @@ const Dashboard = () => {
       showToast({
         type: 'success',
         title: 'File caricato con successo!',
-        message: `Processati ${processResult.data.teamMembers.length} membri e ${processResult.data.totalTeamProjects} progetti`,
+        message: `Processati ${processResult.data.teamMembers.length} membri e ${processResult.data.totalTeamProjects} progetti da ${result.fileType.toUpperCase()}`,
         duration: 4000
       });
       
@@ -2459,9 +2465,9 @@ const Dashboard = () => {
         </div>
 
         {!hasLoadedCsv ? (
-          // Stato vuoto - Nuovo FileUploader atomico
+          // Stato vuoto - FileUploader con supporto Excel
           <FileUploader
-            supportedTypes={['csv']}
+            supportedTypes={['csv', 'xlsx', 'xls']}
             maxSizeMB={10}
             onFileLoad={handleNewFileLoad}
             onError={handleNewFileError}
@@ -2469,8 +2475,8 @@ const Dashboard = () => {
             isLoading={isLoading}
             enableDragDrop={true}
             title="Carica dati del team"
-            description="Carica un file CSV con i dati dei progetti per visualizzare la dashboard"
-            buttonText="Seleziona file CSV"
+            description="Carica un file CSV o Excel con i dati dei progetti per visualizzare la dashboard"
+            buttonText="Seleziona file"
           />
         ) : !dashboardData ? (
           // Stato di caricamento quando CSV è presente ma dashboardData non ancora caricato
@@ -3026,7 +3032,7 @@ const Dashboard = () => {
             {/* Upload new data button */}
             <div className="text-center">
               <FileUploader
-                supportedTypes={['csv']}
+                supportedTypes={['csv', 'xlsx', 'xls']}
                 maxSizeMB={10}
                 onFileLoad={handleNewFileLoad}
                 onError={handleNewFileError}
@@ -3035,7 +3041,7 @@ const Dashboard = () => {
                 enableDragDrop={false}
                 title=""
                 description=""
-                buttonText="Carica nuovi dati CSV"
+                buttonText="Carica nuovi dati"
                 className="py-4"
               />
             </div>

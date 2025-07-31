@@ -1,7 +1,38 @@
 # 📊 Team Dashboard
 
-[![Deploy to GitHub Pages](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml)
-[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+[![Deploy to GitHub Pages](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.ym# 📋 Changelog
+
+## [v2.3.0] - 2025-07-31
+### 🎉 **EXCEL SUPPORT - MULTI-FORMATO FILE**
+- **✅ Supporto Excel**: Formati .xlsx e .xls completamente supportati
+- **✅ Conversione Automatica**: Excel → CSV interno senza perdita dati
+- **✅ Multi-Sheet Handling**: Usa automaticamente il primo foglio
+- **✅ Drag & Drop Excel**: Interfaccia unificata per CSV e Excel
+- **✅ FileUploader Esteso**: Componente atomico ora multi-formato
+
+### 📊 **Miglioramenti UX**
+- **Caricamento Unificato**: Una sola interfaccia per CSV e Excel
+- **Toast Informativi**: Mostra formato file processato
+- **Validazione Excel**: Controllo integrità fogli di lavoro
+- **Error Handling**: Gestione errori specifica per Excel
+- **Performance**: Conversione ottimizzata per file grandi
+
+### 🔧 **Implementazione Tecnica**
+- **XLSX Library**: Integrazione libreria xlsx per parsing Excel
+- **FileUploader Enhanced**: Esteso con convertExcelToCSV()
+- **Type Safety**: Supporto TypeScript completo per Excel
+- **Backward Compatibility**: Mantiene piena compatibilità CSV
+- **Atomic Components**: Benefici architettura modulare v2.2.0
+
+### 📋 **Benefici Business**
+- **🚀 Flessibilità**: Utenti possono usare Excel o CSV
+- **⚡ Produttività**: Eliminato step manuale CSV export
+- **💼 Enterprise Ready**: Supporto formati corporate standard
+- **🔄 Workflow**: Integrazione diretta con strumenti Office
+
+---
+
+## [v2.2.0] - 2025-07-31[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://giamma80.github.io/dashboard/)
 [![Latest Release](https://img.shields.io/github/v/release/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
 
@@ -51,8 +82,11 @@ La dashboard consente di:
 - **Reset Filtri**: Pulizia rapida di tutti i filtri applicati
 - **Gestione Errori Intelligente**: Suggerimenti automatici quando i filtri non producono risultati
 
-### 📁 Gestione File CSV
+### 📁 Gestione File Multi-Formato
 - **Caricamento Drag & Drop**: Interfaccia intuitiva per il caricamento
+- **Supporto CSV**: File CSV con separatore punto e virgola (;)
+- **Supporto Excel**: File .xlsx e .xls con conversione automatica
+- **Conversione Intelligente**: Excel convertito automaticamente in formato CSV
 - **Validazione Robusta**: Controllo campi obbligatori e formati
 - **Report Errori**: Notifiche dettagliate per progetti non validi
 - **Toast Notifications**: Feedback visivo per operazioni e errori
@@ -125,10 +159,19 @@ npm run build
 npm run electron:build
 ```
 
-## 📄 Formato CSV Supportato
+## 📄 Formati File Supportati
 
+### 📊 **CSV (Comma Separated Values)**
 Il file CSV deve contenere le seguenti colonne (separate da `;`):
 
+### 📗 **Excel (.xlsx / .xls)**
+File Excel con le stesse colonne del CSV. La dashboard:
+- ✅ **Legge automaticamente** il primo foglio di lavoro
+- ✅ **Converte in tempo reale** Excel → CSV interno
+- ✅ **Mantiene formattazione** dei dati originali
+- ✅ **Gestisce** entrambi i formati .xlsx (moderno) e .xls (legacy)
+
+### 📋 **Struttura Colonne (CSV e Excel)**
 1. **Nome Progetto**
 2. **Stream** 
 3. **Membro del Team**
@@ -141,6 +184,8 @@ Il file CSV deve contenere le seguenti colonne (separate da `;`):
 10. **Note**
 11. **Stakeholder**
 12. **Tipo Progetto**
+
+💡 **Tip**: Puoi preparare i dati in Excel e salvare come .xlsx, oppure esportare direttamente CSV dal tuo sistema di gestione progetti.
 
 ## 🏗️ Architettura & CI/CD
 

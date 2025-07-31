@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export type SupportedFileType = 'csv' | 'xlsx' | 'xls';
 
@@ -88,6 +89,92 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Converte file Excel in CSV con pulizia intelligente
+  const convertExcelToCSV = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          
+          // Usa il primo foglio di lavoro
+          const firstSheetName = workbook.SheetNames[0];
+          if (!firstSheetName) {
+            reject(new Error('Il file Excel non contiene fogli di lavoro'));
+            return;
+          }
+          
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Converte in JSON prima per una migliore pulizia
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+            header: 1, // Usa array di array invece di oggetti
+            defval: '', // Valore default per celle vuote
+            blankrows: false // Salta righe completamente vuote
+          });
+          
+          if (!jsonData || jsonData.length === 0) {
+            reject(new Error('Il foglio di lavoro Excel è vuoto'));
+            return;
+          }
+          
+          // Filtra righe che hanno almeno una cella non vuota
+          const filteredData = jsonData.filter((row: any) => {
+            if (!Array.isArray(row)) return false;
+            return row.some(cell => cell !== null && cell !== undefined && cell.toString().trim() !== '');
+          });
+          
+          if (filteredData.length === 0) {
+            reject(new Error('Il foglio di lavoro Excel non contiene dati validi'));
+            return;
+          }
+          
+          // Converte in CSV manualmente per controllo migliore
+          const csvLines = filteredData.map((row: any) => {
+            return row.map((cell: any) => {
+              if (cell === null || cell === undefined) return '';
+              
+              // Gestisce date Excel
+              if (cell instanceof Date) {
+                const day = String(cell.getDate()).padStart(2, '0');
+                const month = String(cell.getMonth() + 1).padStart(2, '0');
+                const year = String(cell.getFullYear()).slice(-2);
+                return `${day}/${month}/${year}`;
+              }
+              
+              // Gestisce numeri e stringhe
+              const cellValue = cell.toString().trim();
+              
+              // Escape punto e virgola se presente nel valore
+              if (cellValue.includes(';')) {
+                return `"${cellValue.replace(/"/g, '""')}"`;
+              }
+              
+              return cellValue;
+            }).join(';');
+          });
+          
+          const csv = csvLines.join('\n');
+          
+          console.log(`Excel convertito: ${filteredData.length} righe → CSV`);
+          console.log('Prime 3 righe CSV:', csvLines.slice(0, 3));
+          
+          resolve(csv);
+        } catch (error) {
+          reject(new Error(`Errore nella conversione Excel: ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Errore nella lettura del file Excel'));
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   // Mappa estensioni a tipi
   const getFileTypeFromName = (fileName: string): SupportedFileType | null => {
     const extension = fileName.toLowerCase().split('.').pop();
@@ -146,8 +233,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     try {
       const fileType = getFileTypeFromName(file.name)!;
       
-      // Per ora gestiamo solo CSV, in futuro estenderemo per Excel
       if (fileType === 'csv') {
+        // Gestione CSV esistente
         const reader = new FileReader();
         
         reader.onload = (e) => {
@@ -184,11 +271,29 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         };
 
         reader.readAsText(file, 'UTF-8');
+        
+      } else if (fileType === 'xlsx' || fileType === 'xls') {
+        // Gestione Excel - converte in CSV
+        try {
+          const csvContent = await convertExcelToCSV(file);
+          
+          onFileLoad({
+            content: csvContent,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType
+          });
+        } catch (error) {
+          onError({
+            type: 'read',
+            message: error instanceof Error ? error.message : 'Errore nella conversione Excel'
+          });
+        }
       } else {
-        // Placeholder per Excel - implementeremo in futuro
+        // Formato non supportato
         onError({
           type: 'format',
-          message: `Il formato ${fileType} non è ancora supportato. Usa CSV per ora.`
+          message: `Il formato ${fileType} non è supportato`
         });
       }
     } catch (error) {
