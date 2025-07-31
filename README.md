@@ -1,38 +1,27 @@
 # 📊 Team Dashboard
 
-[![Deploy to GitHub Pages](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.ym# 📋 Changelog
+[![Deploy to GitHub Pages](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/deploy-pages.yml)
+[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://giamma80.github.io/dashboard/)
+[![Latest Release](https://img.shields.io/github/v/release/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
 
-## [v2.3.0] - 2025-07-31
-### 🎉 **EXCEL SUPPORT - MULTI-FORMATO FILE**
-- **✅ Supporto Excel**: Formati .xlsx e .xls completamente supportati
-- **✅ Conversione Automatica**: Excel → CSV interno senza perdita dati
-- **✅ Multi-Sheet Handling**: Usa automaticamente il primo foglio
-- **✅ Drag & Drop Excel**: Interfaccia unificata per CSV e Excel
-- **✅ FileUploader Esteso**: Componente atomico ora multi-formato
+**Una dashboard completa per la gestione e visualizzazione di progetti, allocazione risorse e performance del team con supporto Excel nativo.**
 
-### 📊 **Miglioramenti UX**
-- **Caricamento Unificato**: Una sola interfaccia per CSV e Excel
-- **Toast Informativi**: Mostra formato file processato
-- **Validazione Excel**: Controllo integrità fogli di lavoro
-- **Error Handling**: Gestione errori specifica per Excel
-- **Performance**: Conversione ottimizzata per file grandi
+🌐 **[PROVA LA DEMO LIVE](https://giamma80.github.io/dashboard/)** | 📦 **[SCARICA L'APP DESKTOP](https://github.com/giamma80/dashboard/releases/latest)**
 
-### 🔧 **Implementazione Tecnica**
-- **XLSX Library**: Integrazione libreria xlsx per parsing Excel
-- **FileUploader Enhanced**: Esteso con convertExcelToCSV()
-- **Type Safety**: Supporto TypeScript completo per Excel
-- **Backward Compatibility**: Mantiene piena compatibilità CSV
-- **Atomic Components**: Benefici architettura modulare v2.2.0
+## 🚀 Novità v2.3.0 - Supporto Excel Completo!
 
-### 📋 **Benefici Business**
-- **🚀 Flessibilità**: Utenti possono usare Excel o CSV
-- **⚡ Produttività**: Eliminato step manuale CSV export
-- **💼 Enterprise Ready**: Supporto formati corporate standard
-- **🔄 Workflow**: Integrazione diretta con strumenti Office
+### 📗 **Excel Nativo (.xlsx/.xls)**
+- ✅ **Carica file Excel direttamente** - No più conversioni manuali
+- ✅ **Supporto .xlsx e .xls** - Formati moderni e legacy
+- ✅ **Conversione automatica** - Excel → CSV interno in tempo reale
+- ✅ **Drag & Drop unificato** - Stessa interfaccia per CSV e Excel
 
----
-
-## [v2.2.0] - 2025-07-31[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
+### 🎯 **Benefici Immediati**
+- **⚡ Produttività**: Elimina step di export CSV da Excel
+- **💼 Enterprise Ready**: Integrazione diretta con file aziendali
+- **🔄 Workflow**: Dalla creazione Excel all'analisi in un click
+- **👥 Team**: Condivisione diretta file Excel senza conversioni[![Build and Release](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml/badge.svg)](https://github.com/giamma80/dashboard/actions/workflows/build-release.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://giamma80.github.io/dashboard/)
 [![Latest Release](https://img.shields.io/github/v/release/giamma80/dashboard)](https://github.com/giamma80/dashboard/releases/latest)
 
@@ -161,14 +150,19 @@ npm run electron:build
 
 ## 📄 Formati File Supportati
 
-### 📊 **CSV (Comma Separated Values)**
-Il file CSV deve contenere le seguenti colonne (separate da `;`):
+### 🎉 **NUOVO! Excel Nativo (.xlsx/.xls)**
+**Carica direttamente i tuoi file Excel senza conversioni!**
+- ✅ **Formato moderno**: .xlsx (Excel 2007+)
+- ✅ **Formato legacy**: .xls (Excel 97-2003)  
+- ✅ **Auto-processing**: Legge automaticamente il primo foglio
+- ✅ **Conversione trasparente**: Excel → CSV interno senza perdita dati
+- ✅ **Stesso drag & drop**: Interfaccia unificata con CSV
 
-### 📗 **Excel (.xlsx / .xls)**
-File Excel con le stesse colonne del CSV. La dashboard:
-- ✅ **Legge automaticamente** il primo foglio di lavoro
-- ✅ **Converte in tempo reale** Excel → CSV interno
-- ✅ **Mantiene formattazione** dei dati originali
+### 📊 **CSV (Comma Separated Values)**
+Supporto completo per file CSV tradizionali:
+- 📁 Separatore punto e virgola (`;`)
+- 🔍 Validazione automatica struttura
+- 📋 Report errori dettagliato
 - ✅ **Gestisce** entrambi i formati .xlsx (moderno) e .xls (legacy)
 
 ### 📋 **Struttura Colonne (CSV e Excel)**
@@ -228,7 +222,12 @@ dashboard/
 1. **Sviluppo**: Modifica codice in locale
 2. **Commit**: `git commit -m "feature: nuova funzionalità"`
 3. **Push**: `git push origin main` → Aggiorna sito web
-4. **Tag**: `git tag v1.x && git push origin v1.x` → Genera binari
+4. **Tag**: `4. **Tag**: `git tag v1.x && git push origin v1.x` → Genera binari
+5. **Automatico**: GitHub Actions crea release con binari Windows
+
+---
+
+## 📋 Changelog (Sintetico)` → Genera binari
 5. **Automatico**: GitHub Actions crea release con binari Windows
 
 ---
@@ -474,6 +473,37 @@ Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettag
 - � **Feature Requests**: [GitHub Discussions](https://github.com/giamma80/dashboard/discussions)
 - 📖 **Documentazione**: [Wiki del Progetto](https://github.com/giamma80/dashboard/wiki)
 
+---
+
+## 📋 Changelog (Sintetico)
+
+### v2.3.0 (2025-07-31) - 🎉 Excel Support
+- ✅ **Supporto Excel nativo** (.xlsx/.xls)
+- ✅ **Conversione automatica** Excel → CSV
+- ✅ **Drag & drop unificato** per Excel e CSV
+- ✅ **Componenti atomici** FileUploader modulare
+
+### v2.2.0 (2025-07-31) - 🔧 Atomic Components  
+- ✅ **Architettura modulare** con componenti atomici
+- ✅ **FileUploader estratto** come componente riutilizzabile
+- ✅ **useFileParser hook** per gestione file
+- ✅ **Preparazione** per supporto multi-formato
+
+### v2.1.1 (2025-07-31) - 🐛 Critical Fixes
+- ✅ **Fix duplicati** in Top 5 progetti
+- ✅ **Fix conteggio** progetti totali errato
+- ✅ **Aggregazione intelligente** per progetti multi-membro
+
+### v2.1.0 (2025-07-31) - 🎯 Advanced Filters
+- ✅ **Filtri avanzati** Status e Type
+- ✅ **FilterManager** centralizzato
+- ✅ **Toast intelligenti** per suggerimenti
+- ✅ **UX migliorata** senza reset indesiderati
+
+[📋 **Changelog Completo**](https://github.com/giamma80/dashboard/releases)
+
+---
+
 ### 🚀 **Links Utili**
 - **🌐 Demo Live**: https://giamma80.github.io/dashboard/
 - **📦 Scarica App**: https://github.com/giamma80/dashboard/releases/latest
@@ -487,10 +517,11 @@ Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per maggiori dettag
 ✅ **Dashboard Web Funzionante** - Live su GitHub Pages  
 ✅ **App Desktop Windows** - Binari automatici per ogni release  
 ✅ **CI/CD Completo** - Pipeline automatico professionale  
+✅ **Supporto Multi-Formato** - CSV ed Excel nativi
 ✅ **Zero Manual Deployment** - Tutto automatizzato da git tag  
 
 ⭐ **Se questo progetto ti è utile, considera di dargli una stella su GitHub!**
 
 ---
 
-*Team Dashboard - Trasforma i tuoi dati CSV in insights azionabili.* 🚀
+*Team Dashboard - Trasforma i tuoi dati CSV ed Excel in insights azionabili.* 🚀
