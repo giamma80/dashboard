@@ -3,6 +3,8 @@ import { Users, Upload, Download, Calendar, TrendingUp, BarChart3, PieChart as P
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart, Line } from 'recharts';
 import DownloadSection from './DownloadSection';
 import { ToastContainer, useToast } from './Toast';
+import FileUploader from './FileUploader';
+import type { FileUploadResult, FileUploadError } from './FileUploader';
 
 // Tipi per i nuovi dati
 interface ProjectData {
@@ -1086,6 +1088,13 @@ const Dashboard = () => {
     }
   }, [csvData, dateRange, selectedTeamMembers, selectedStreams, selectedStatus, selectedType]);
 
+  // useEffect per gestire lo stato loading quando i dati sono processati
+  useEffect(() => {
+    if (dashboardData && isLoading) {
+      setIsLoading(false);
+    }
+  }, [dashboardData, isLoading]);
+
   // Funzione per gestire il clic sulla timeline
   const handleTimelineClick = (data: any) => {
     if (data && data.activePayload && data.activePayload[0]) {
@@ -1245,6 +1254,108 @@ const Dashboard = () => {
     reader.addEventListener('loadend', () => {
       clearTimeout(timeout);
     });
+  };
+
+  // Handler per il nuovo FileUploader atomico
+  const handleNewFileLoad = (result: FileUploadResult) => {
+    console.log('File caricato tramite FileUploader:', result.fileName);
+    
+    // Reset filtri quando si carica un nuovo file
+    setSelectedTeamMembers([]);
+    setSelectedStreams([]);
+    setSelectedStatus([]);
+    setSelectedType([]);
+    setSelectedQuarter('');
+    
+    try {
+      console.log('Processamento nuovo file tramite FileUploader...');
+      const processResult = processCSV(result.content, dateRange, [], [], [], []);
+      
+      setDashboardData(processResult.data);
+      setCsvData(result.content);
+      
+      const now = new Date().toLocaleString('it-IT');
+      setLastUpdate(now);
+      
+      // Salva dati nel localStorage
+      localStorage.setItem('team-dashboard-data', JSON.stringify(processResult.data));
+      localStorage.setItem('team-dashboard-csv', result.content);
+      localStorage.setItem('team-dashboard-lastUpdate', now);
+      
+      console.log(`File caricato con successo: ${processResult.data.teamMembers.length} membri, ${processResult.data.totalTeamProjects} progetti`);
+      
+      // Reset errore
+      setError(null);
+      
+      // Mostra toast di successo
+      showToast({
+        type: 'success',
+        title: 'File caricato con successo!',
+        message: `Processati ${processResult.data.teamMembers.length} membri e ${processResult.data.totalTeamProjects} progetti`,
+        duration: 4000
+      });
+      
+      // Se ci sono errori nel parsing, mostra anche un toast di warning
+      if (processResult.errors.length > 0) {
+        const maxErrorsToShow = 5;
+        const errorList = processResult.errors.slice(0, maxErrorsToShow).join('\n');
+        const moreErrors = processResult.errors.length > maxErrorsToShow ? `\n... e altri ${processResult.errors.length - maxErrorsToShow} errori` : '';
+        
+        showToast({
+          type: 'warning',
+          title: `${processResult.errors.length} progetti non caricati`,
+          message: `Alcuni progetti hanno valori non validi e sono stati ignorati:\n\n${errorList}${moreErrors}`,
+          duration: 8000,
+          action: {
+            label: 'Vedi tutti gli errori',
+            onClick: () => {
+              console.group('🚨 Errori nel caricamento CSV:');
+              processResult.errors.forEach((error, index) => {
+                console.warn(`${index + 1}. ${error}`);
+              });
+              console.groupEnd();
+              
+              showToast({
+                type: 'info',
+                title: 'Debug errori CSV',
+                message: `Lista completa di ${processResult.errors.length} errori salvata nella console del browser (F12)`,
+                duration: 5000
+              });
+            }
+          }
+        });
+      }
+      
+    } catch (error) {
+      console.error('Errore nel processamento file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto nel processamento del file';
+      setError(`Errore nel processamento del file: ${errorMessage}`);
+      
+      showToast({
+        type: 'error',
+        title: 'Errore nel processamento file',
+        message: errorMessage,
+        duration: 6000
+      });
+    }
+  };
+
+  const handleNewFileError = (error: FileUploadError) => {
+    console.error('Errore FileUploader:', error);
+    setError(error.message);
+    
+    showToast({
+      type: 'error',
+      title: 'Errore nel caricamento file',
+      message: error.message,
+      duration: 6000
+    });
+  };
+
+  const handleNewFileLoadStart = () => {
+    console.log('Inizio caricamento file tramite FileUploader');
+    setError(null);
+    setIsLoading(true);
   };
 
   // Componente Gauge per la pressione di lavoro
@@ -2348,34 +2459,19 @@ const Dashboard = () => {
         </div>
 
         {!hasLoadedCsv ? (
-          // Stato vuoto
-          <div className="text-center py-12">
-            <div className="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto">
-              <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Carica dati del team
-              </h3>
-              <p className="text-gray-600 mb-6 text-sm">
-                Carica un file CSV con i dati dei progetti per visualizzare la dashboard
-              </p>
-              <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
-                <Upload className="w-4 h-4 mr-2" />
-                Seleziona file CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-              {error && (
-                <p className="text-red-600 text-sm mt-4">{error}</p>
-              )}
-              <p className="text-center text-gray-500 text-sm mt-3">
-                Carica un file CSV per visualizzare progetti, timeline e allocazioni del team
-              </p>
-            </div>
-          </div>
+          // Stato vuoto - Nuovo FileUploader atomico
+          <FileUploader
+            supportedTypes={['csv']}
+            maxSizeMB={10}
+            onFileLoad={handleNewFileLoad}
+            onError={handleNewFileError}
+            onLoadStart={handleNewFileLoadStart}
+            isLoading={isLoading}
+            enableDragDrop={true}
+            title="Carica dati del team"
+            description="Carica un file CSV con i dati dei progetti per visualizzare la dashboard"
+            buttonText="Seleziona file CSV"
+          />
         ) : !dashboardData ? (
           // Stato di caricamento quando CSV è presente ma dashboardData non ancora caricato
           <div className="flex items-center justify-center py-12">
@@ -2929,19 +3025,19 @@ const Dashboard = () => {
 
             {/* Upload new data button */}
             <div className="text-center">
-              <label className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
-                <Upload className="w-5 h-5 mr-2" />
-                Carica nuovi dati CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-              {error && (
-                <p className="text-red-600 text-sm mt-2">{error}</p>
-              )}
+              <FileUploader
+                supportedTypes={['csv']}
+                maxSizeMB={10}
+                onFileLoad={handleNewFileLoad}
+                onError={handleNewFileError}
+                onLoadStart={handleNewFileLoadStart}
+                isLoading={isLoading}
+                enableDragDrop={false}
+                title=""
+                description=""
+                buttonText="Carica nuovi dati CSV"
+                className="py-4"
+              />
             </div>
           </div>
         )}
