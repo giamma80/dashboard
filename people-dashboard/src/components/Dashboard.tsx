@@ -28,6 +28,105 @@ import {
 // Import delle utilities
 import { calculateAvailableWorkHours, FilterManager } from '../utils';
 
+// ========================================
+// 🔧 FUNZIONI TEMPORANEE (da rimuovere quando estrae i services)
+// ========================================
+
+// Funzione temporanea per processCSV (da estrarre poi in services)
+const processCSV = (csvContent: string, dateRange: { start: Date; end: Date }, filters: any[]) => {
+  // TODO: Implementazione temporanea - da sostituire con vera estrazione
+  console.log('processCSV temporaneo chiamato');
+  return {
+    data: {
+      timeline: [],
+      teamMembers: [],
+      totalTeamHours: 0,
+      totalTeamProjects: 0,
+      teamWorkPressure: 0,
+      totalTeamWorkHours: 0,
+      statusDistribution: [],
+      priorityDistribution: [],
+      typeDistribution: [],
+      streamDistribution: [],
+      streamDistributionForCharts: [],
+      topProjects: []
+    },
+    errors: [],
+    suggestions: []
+  };
+};
+
+// Funzione temporanea per createEmptyDashboardData
+const createEmptyDashboardData = () => {
+  return {
+    timeline: [],
+    teamMembers: [],
+    totalTeamHours: 0,
+    totalTeamProjects: 0,
+    teamWorkPressure: 0,
+    totalTeamWorkHours: 0,
+    statusDistribution: [],
+    priorityDistribution: [],
+    typeDistribution: [],
+    streamDistribution: [],
+    streamDistributionForCharts: [],
+    topProjects: []
+  };
+};
+
+// ========================================
+// 🧩 COMPONENTI TEMPORANEI (da estrarre in ui/)
+// ========================================
+
+// Componente temporaneo WorkPressureGauge (da estrarre in ui/WorkPressureGauge.tsx)
+const WorkPressureGauge = ({ value, maxValue, size, title }: { 
+  value: number; 
+  maxValue: number; 
+  size: number; 
+  title: string 
+}) => {
+  const percentage = Math.min((value / maxValue) * 100, 100);
+  const getColor = (perc: number) => {
+    if (perc > 100) return '#DC2626';
+    if (perc > 80) return '#F59E0B';
+    return '#10B981';
+  };
+
+  return (
+    <div className="relative flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size / 2 + 20 }}>
+        {/* Sfondo gauge */}
+        <svg width={size} height={size / 2 + 20} className="absolute">
+          <path
+            d={`M 20 ${size / 2} A ${size / 2 - 20} ${size / 2 - 20} 0 0 1 ${size - 20} ${size / 2}`}
+            fill="none"
+            stroke="#E5E7EB"
+            strokeWidth="8"
+          />
+          {/* Arco colorato */}
+          <path
+            d={`M 20 ${size / 2} A ${size / 2 - 20} ${size / 2 - 20} 0 0 1 ${size - 20} ${size / 2}`}
+            fill="none"
+            stroke={getColor(percentage)}
+            strokeWidth="8"
+            strokeDasharray={`${(percentage / 100) * Math.PI * (size / 2 - 20)} ${Math.PI * (size / 2 - 20)}`}
+            strokeDashoffset={0}
+          />
+        </svg>
+        {/* Valore centrale */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-bold" style={{ color: getColor(percentage) }}>
+              {value.toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">{title}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   // Hook per i toast
   const { toasts, showToast, closeToast } = useToast();
@@ -70,6 +169,10 @@ const Dashboard = () => {
   const [isStreamsDropdownOpen, setIsStreamsDropdownOpen] = useState(false);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+
+  // ========================================
+  // 🔧 FASE 2: FUNZIONI HELPER DA ESTRARRE
+  // ========================================
 
   // Funzioni helper per i quarter
   const getQuarterOptions = () => {
@@ -119,6 +222,10 @@ const Dashboard = () => {
     topProjects: []
   };
 
+  // ========================================
+  // 📅 DATE UTILS: Da estrarre in dateUtils
+  // ========================================
+  
   // Funzione per parsare la data in formato DD/MM/YY
   const parseDate = (dateStr: string): Date | null => {
     // Restituisce null per date vuote o invalide invece di new Date()
@@ -186,6 +293,10 @@ const Dashboard = () => {
     }
   };
 
+  // ========================================
+  // 📊 TIMELINE UTILS: Da estrarre in timelineUtils  
+  // ========================================
+  
   // Funzione per generare i mesi della timeline
   const generateMonthsInRange = (startDate: Date, endDate: Date): TimelineData[] => {
     const months: TimelineData[] = [];
@@ -205,6 +316,10 @@ const Dashboard = () => {
     return months;
   };
 
+  // ========================================
+  // 🧮 PROJECT CALCULATION UTILS: Da estrarre in projectUtils
+  // ========================================
+  
   // Funzione per verificare se un progetto è attivo in un determinato mese
   const isProjectActiveInMonth = (project: ProjectData, monthDate: Date): boolean => {
     const startDate = parseDate(project.startDate);
@@ -273,110 +388,114 @@ const Dashboard = () => {
     return workingDays;
   };
 
-  // Funzione per processare i dati CSV
-  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[], statusFilters: string[], typeFilters: string[]): { data: DashboardData; errors: string[]; suggestions?: FilterSuggestion[] } => {
-    try {
-      // Validazione input
-      if (!csvContent || csvContent.trim() === '') {
-        throw new Error('Il contenuto del file CSV è vuoto');
-      }
+  // 🧩 Funzione helper: Valida l'input CSV
+  const validateCSVInput = (csvContent: string) => {
+    if (!csvContent || csvContent.trim() === '') {
+      throw new Error('Il contenuto del file CSV è vuoto');
+    }
 
-      const lines = csvContent.trim().split('\n');
-      
-      if (lines.length < 2) {
-        throw new Error('Il file CSV deve contenere almeno una riga di intestazione e una di dati');
-      }
+    const lines = csvContent.trim().split('\n');
+    
+    if (lines.length < 2) {
+      throw new Error('Il file CSV deve contenere almeno una riga di intestazione e una di dati');
+    }
 
-      // Parsing progetti con validazione
-      const projects: ProjectData[] = [];
-      const errors: string[] = [];
+    return lines;
+  };
 
-      lines.slice(1).forEach((line, index) => {
-        try {
-          const values = line.split(';');
-          
-          if (values.length < 12) {
-            errors.push(`Riga ${index + 2}: numero insufficiente di colonne (trovate ${values.length}, richieste 12)`);
-            return;
-          }
+  // 🧩 Funzione helper: Parsing dei progetti dal CSV
+  const parseCSVProjects = (lines: string[]) => {
+    const projects: ProjectData[] = [];
+    const errors: string[] = [];
 
-          const project = {
-            name: values[0]?.trim() || '',
-            stream: values[1]?.trim() || '',
-            teamMember: values[2]?.trim() || '',
-            startDate: values[3]?.trim() || '',
-            deliveryDeadline: values[4]?.trim() || '',
-            status: values[5]?.trim() || '',
-            priority: values[6]?.trim() || '',
-            groupDriven: values[7]?.trim() || '',
-            neededHours: parseInt(values[8]) || 0,
-            notes: values[9]?.trim() || '',
-            stakeholder: values[10]?.trim() || '',
-            type: values[11]?.trim() || ''
-          };
-
-          // Validazione campi obbligatori
-          if (!project.name) {
-            errors.push(`Riga ${index + 2}: nome progetto mancante`);
-            return;
-          }
-          if (!project.teamMember) {
-            errors.push(`Riga ${index + 2}: membro del team mancante per progetto "${project.name}"`);
-            return;
-          }
-          if (project.neededHours <= 0) {
-            errors.push(`Riga ${index + 2}: ore necessarie non valide per progetto "${project.name}"`);
-            return;
-          }
-
-          projects.push(project);
-        } catch (rowError) {
-          errors.push(`Riga ${index + 2}: errore nel parsing - ${rowError instanceof Error ? rowError.message : 'errore sconosciuto'}`);
+    lines.slice(1).forEach((line, index) => {
+      try {
+        const values = line.split(';');
+        
+        if (values.length < 12) {
+          errors.push(`Riga ${index + 2}: numero insufficiente di colonne (trovate ${values.length}, richieste 12)`);
+          return;
         }
-      });
 
-      // Se ci sono troppi errori, interrompi
-      if (errors.length > 0) {
-        console.warn('Errori nel parsing CSV:', errors);
-        if (errors.length > projects.length / 2) {
-          throw new Error(`Troppi errori nel file CSV (${errors.length} errori). Primi errori:\n${errors.slice(0, 5).join('\n')}`);
-        }
-      }
-
-      if (projects.length === 0) {
-        // Se non ci sono progetti validi nel CSV, ritorna dati vuoti invece di errore
-        console.warn('Nessun progetto valido trovato nel file CSV');
-        return {
-          data: emptyData,
-          errors: ['Nessun progetto valido trovato nel file CSV'],
-          suggestions: []
+        const project = {
+          name: values[0]?.trim() || '',
+          stream: values[1]?.trim() || '',
+          teamMember: values[2]?.trim() || '',
+          startDate: values[3]?.trim() || '',
+          deliveryDeadline: values[4]?.trim() || '',
+          status: values[5]?.trim() || '',
+          priority: values[6]?.trim() || '',
+          groupDriven: values[7]?.trim() || '',
+          neededHours: parseInt(values[8]) || 0,
+          notes: values[9]?.trim() || '',
+          stakeholder: values[10]?.trim() || '',
+          type: values[11]?.trim() || ''
         };
+
+        // Validazione campi obbligatori
+        if (!project.name) {
+          errors.push(`Riga ${index + 2}: nome progetto mancante`);
+          return;
+        }
+        if (!project.teamMember) {
+          errors.push(`Riga ${index + 2}: membro del team mancante per progetto "${project.name}"`);
+          return;
+        }
+        if (project.neededHours <= 0) {
+          errors.push(`Riga ${index + 2}: ore necessarie non valide per progetto "${project.name}"`);
+          return;
+        }
+
+        projects.push(project);
+      } catch (rowError) {
+        errors.push(`Riga ${index + 2}: errore nel parsing - ${rowError instanceof Error ? rowError.message : 'errore sconosciuto'}`);
       }
+    });
 
-      console.log(`Processati ${projects.length} progetti (${errors.length} errori ignorati)`);
+    // Validazione finale
+    if (errors.length > 0) {
+      console.warn('Errori nel parsing CSV:', errors);
+      if (errors.length > projects.length / 2) {
+        throw new Error(`Troppi errori nel file CSV (${errors.length} errori). Primi errori:\n${errors.slice(0, 5).join('\n')}`);
+      }
+    }
 
-      // Usa FilterManager per gestire i filtri in modo centralizzato
-      const filterManager = new FilterManager(projects);
-      
-      const filterResult = filterManager.applyFilters({
-        members: memberFilters.filter(m => m && m.trim() !== ''),
-        streams: streamFilters.filter(s => s && s.trim() !== ''),
-        status: statusFilters.filter(s => s && s.trim() !== ''),
-        type: typeFilters.filter(t => t && t.trim() !== '')
-      });
+    if (projects.length === 0) {
+      console.warn('Nessun progetto valido trovato nel file CSV');
+      return {
+        projects: [],
+        errors: ['Nessun progetto valido trovato nel file CSV']
+      };
+    }
 
-      // Se ci sono errori di filtro, continua con progetti vuoti ma mantieni gli errori
-      const filteredProjects = filterResult.projects;
-      const filterErrors = filterResult.errors;
-      const filterSuggestions = filterResult.suggestions;
+    console.log(`Processati ${projects.length} progetti (${errors.length} errori ignorati)`);
+    return { projects, errors };
+  };
 
-      // Debug: Log dei risultati filtri
-      console.log('Filtri applicati tramite FilterManager:', {
-        totalProjects: projects.length,
-        filteredProjects: filteredProjects.length,
-        filterErrors: filterErrors.length,
-        filterSuggestions: filterSuggestions.length
-      });
+  // 🧩 Funzione helper: Filtra progetti per data e tipo
+  const filterProjectsByDateAndType = (projects: ProjectData[], dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[], statusFilters: string[], typeFilters: string[]) => {
+    // Usa FilterManager per gestire i filtri in modo centralizzato
+    const filterManager = new FilterManager(projects);
+    
+    const filterResult = filterManager.applyFilters({
+      members: memberFilters.filter(m => m && m.trim() !== ''),
+      streams: streamFilters.filter(s => s && s.trim() !== ''),
+      status: statusFilters.filter(s => s && s.trim() !== ''),
+      type: typeFilters.filter(t => t && t.trim() !== '')
+    });
+
+    // Se ci sono errori di filtro, continua con progetti vuoti ma mantieni gli errori
+    const filteredProjects = filterResult.projects;
+    const filterErrors = filterResult.errors;
+    const filterSuggestions = filterResult.suggestions;
+
+    // Debug: Log dei risultati filtri
+    console.log('Filtri applicati tramite FilterManager:', {
+      totalProjects: projects.length,
+      filteredProjects: filteredProjects.length,
+      filterErrors: filterErrors.length,
+      filterSuggestions: filterSuggestions.length
+    });
 
     // Applica filtro data
     const startFilterDate = new Date(dateFilter.start);
@@ -395,6 +514,17 @@ const Dashboard = () => {
       return projectEnd >= startFilterDate && projectStart <= endFilterDate;
     });
 
+    return {
+      projects: dateFilteredProjects,
+      errors: filterErrors,
+      suggestions: filterSuggestions,
+      startFilterDate,
+      endFilterDate
+    };
+  };
+
+  // 🧩 Funzione helper: Calcola la timeline dei progetti
+  const calculateTimelineData = (dateFilteredProjects: ProjectData[], startFilterDate: Date, endFilterDate: Date, memberFilters: string[]) => {
     // Genera timeline
     const timeline = generateMonthsInRange(startFilterDate, endFilterDate);
     
@@ -462,6 +592,11 @@ const Dashboard = () => {
       }
     });
 
+    return timeline;
+  };
+
+  // 🧩 Funzione helper: Calcola i dati dei team members
+  const calculateTeamMembersData = (dateFilteredProjects: ProjectData[], startFilterDate: Date, endFilterDate: Date) => {
     // Calcola dati membri del team
     const teamMemberMap = new Map<string, TeamMemberData>();
     
@@ -586,6 +721,17 @@ const Dashboard = () => {
     const totalTeamWorkHours = teamMembers.length * finalAvailableHours;
     const teamWorkPressure = Math.min((totalTeamHours / totalTeamWorkHours) * 100, 200);
 
+    return {
+      teamMembers,
+      totalTeamHours,
+      totalTeamProjects,
+      teamWorkPressure,
+      totalTeamWorkHours
+    };
+  };
+
+  // 🧩 Funzione helper: Calcola le distribuzioni (status, priority, type, stream)
+  const calculateDistributionsData = (dateFilteredProjects: ProjectData[], startFilterDate: Date, endFilterDate: Date, memberFilters: string[]) => {
     // Calcola distribuzioni
     const statusDistribution: { [status: string]: number } = {};
     const priorityDistribution: { [priority: string]: number } = {};
@@ -646,6 +792,17 @@ const Dashboard = () => {
       }
     }
 
+    return {
+      statusDistribution,
+      priorityDistribution,
+      typeDistribution,
+      streamDistribution,
+      streamDistributionForCharts
+    };
+  };
+
+  // 🧩 Funzione helper: Calcola i top 5 progetti
+  const calculateTopProjects = (dateFilteredProjects: ProjectData[], startFilterDate: Date, endFilterDate: Date) => {
     // Calcola top 5 progetti per ore effettive nel periodo di filtro
     const projectsWithEffectiveHours = dateFilteredProjects.map(project => ({
       ...project,
@@ -686,6 +843,88 @@ const Dashboard = () => {
         member: project.members.size > 1 ? `${project.members.size} membri` : Array.from(project.members)[0],
         color: STREAM_COLORS[project.dominantStream] || STREAM_COLORS.default
       }));
+
+    return topProjects;
+  };
+
+  // Funzione per processare i dati CSV
+  // 🔽 FUNZIONE MOLTO GRANDE: processCSV (~800+ righe → ~40 righe)
+  // ✅ FASE 2: Spezzata con successo in funzioni helper:
+  // - validateCSVInput() ✅ 
+  // - parseCSVProjects() ✅
+  // - filterProjectsByDateAndType() ✅
+  // - calculateTimelineData() ✅
+  // - calculateTeamMembersData() ✅
+  // - calculateDistributionsData() ✅
+  // - calculateTopProjects() ✅
+  const processCSV = (csvContent: string, dateFilter: { start: string; end: string }, memberFilters: string[], streamFilters: string[], statusFilters: string[], typeFilters: string[]): { data: DashboardData; errors: string[]; suggestions?: FilterSuggestion[] } => {
+    try {
+      // ========================================
+      // 📋 SEZIONE 1: VALIDAZIONE INPUT ✅
+      // Estratta in validateCSVInput()
+      // ========================================
+      const lines = validateCSVInput(csvContent);
+
+      // ========================================
+      // 🔍 SEZIONE 2: PARSING PROGETTI CSV ✅
+      // Estratta in parseCSVProjects()
+      // ========================================
+      const parseResult = parseCSVProjects(lines);
+      if (parseResult.projects.length === 0) {
+        return {
+          data: emptyData,
+          errors: parseResult.errors,
+          suggestions: []
+        };
+      }
+      
+      const projects = parseResult.projects;
+      const errors = parseResult.errors;
+
+      // ========================================
+      // 🗂️ SEZIONE 3: FILTRAGGIO PROGETTI ✅
+      // Estratta in filterProjectsByDateAndType()
+      // ========================================
+      const filterResult = filterProjectsByDateAndType(projects, dateFilter, memberFilters, streamFilters, statusFilters, typeFilters);
+      const dateFilteredProjects = filterResult.projects;
+      const filterErrors = [...errors, ...filterResult.errors];
+      const filterSuggestions = filterResult.suggestions;
+      const startFilterDate = filterResult.startFilterDate;
+      const endFilterDate = filterResult.endFilterDate;
+
+    // ========================================
+    // 📅 SEZIONE 4: CALCOLO TIMELINE ✅
+    // Estratta in calculateTimelineData()
+    // ========================================
+    const timeline = calculateTimelineData(dateFilteredProjects, startFilterDate, endFilterDate, memberFilters);
+
+    // ========================================
+    // 👥 SEZIONE 5: CALCOLO TEAM MEMBERS ✅
+    // Estratta in calculateTeamMembersData()
+    // ========================================
+    const teamData = calculateTeamMembersData(dateFilteredProjects, startFilterDate, endFilterDate);
+    const teamMembers = teamData.teamMembers;
+    const totalTeamHours = teamData.totalTeamHours;
+    const totalTeamProjects = teamData.totalTeamProjects;
+    const teamWorkPressure = teamData.teamWorkPressure;
+    const totalTeamWorkHours = teamData.totalTeamWorkHours;
+
+    // ========================================
+    // 📊 SEZIONE 6: CALCOLO DISTRIBUZIONI ✅
+    // Estratta in calculateDistributionsData()
+    // ========================================
+    const distributionsData = calculateDistributionsData(dateFilteredProjects, startFilterDate, endFilterDate, memberFilters);
+    const statusDistribution = distributionsData.statusDistribution;
+    const priorityDistribution = distributionsData.priorityDistribution;
+    const typeDistribution = distributionsData.typeDistribution;
+    const streamDistribution = distributionsData.streamDistribution;
+    const streamDistributionForCharts = distributionsData.streamDistributionForCharts;
+
+    // ========================================
+    // 🏆 SEZIONE 7: CALCOLO TOP PROJECTS ✅
+    // Estratta in calculateTopProjects()
+    // ========================================
+    const topProjects = calculateTopProjects(dateFilteredProjects, startFilterDate, endFilterDate);
 
     return {
       data: {
@@ -859,6 +1098,10 @@ const Dashboard = () => {
     }
   };
 
+  // ========================================
+  // 📁 FILE HANDLERS: Da estrarre in fileHandlers  
+  // ========================================
+  
   // Funzione per gestire il caricamento del file CSV
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -999,6 +1242,128 @@ const Dashboard = () => {
   };
 
   // Handler per il nuovo FileUploader atomico
+  
+  // ========================================
+  // 🔽 FUNZIONE GRANDE: handleNewFileLoad (~65 righe)
+  // TODO FASE 2: Spezzare in:
+  // - validateFile()
+  // - processFile()  
+  // - saveToStorage()
+  // - showSuccessToast()
+  // - showErrorToast()
+  // ========================================
+
+  // 🧩 Funzione helper: Valida il file caricato
+  const validateFileUpload = (result: FileUploadResult) => {
+    console.log(`File caricato tramite FileUploader: ${result.fileName} (${result.fileType.toUpperCase()})`);
+    
+    // Debug per Excel
+    if (result.fileType === 'xlsx' || result.fileType === 'xls') {
+      console.log('Excel content preview:', result.content.substring(0, 500));
+      console.log('Excel lines count:', result.content.split('\n').length);
+    }
+    
+    return true; // Validazione sempre ok per ora
+  };
+
+  // 🧩 Funzione helper: Resetta i filtri per nuovo file
+  const resetFiltersForNewFile = () => {
+    setSelectedTeamMembers([]);
+    setSelectedStreams([]);
+    setSelectedStatus([]);
+    setSelectedType([]);
+    setSelectedQuarter('');
+  };
+
+  // 🧩 Funzione helper: Processa il file e salva i dati
+  const processAndSaveFile = (result: FileUploadResult) => {
+    console.log('Processamento nuovo file tramite FileUploader...');
+    const processResult = processCSV(
+      result.content, 
+      dateRange, 
+      [], [], [], []
+    );
+    
+    setDashboardData(processResult.data);
+    setCsvData(result.content);
+    
+    const now = new Date().toLocaleString('it-IT');
+    setLastUpdate(now);
+    
+    // Salva dati nel localStorage
+    localStorage.setItem('team-dashboard-data', JSON.stringify(processResult.data));
+    localStorage.setItem('team-dashboard-csv', result.content);
+    localStorage.setItem('team-dashboard-lastUpdate', now);
+    
+    console.log(`File caricato con successo: ${processResult.data.teamMembers.length} membri, ${processResult.data.totalTeamProjects} progetti`);
+    
+    return processResult;
+  };
+
+  // 🧩 Funzione helper: Mostra toast di successo
+  const showFileUploadSuccess = (result: FileUploadResult, processResult: any) => {
+    setError(null);
+    
+    // Mostra toast di successo
+    showToast({
+      type: 'success',
+      title: 'File caricato con successo!',
+      message: `Processati ${processResult.data.teamMembers.length} membri e ${processResult.data.totalTeamProjects} progetti da ${result.fileType.toUpperCase()}`,
+      duration: 4000
+    });
+    
+    // Chiudi la modale
+    setShowUploadModal(false);
+  };
+
+  // 🧩 Funzione helper: Gestisce errori di processamento con toast
+  const handleFileProcessingErrors = (processResult: any) => {
+    if (processResult.errors.length > 0) {
+      const maxErrorsToShow = 5;
+      const errorList = processResult.errors.slice(0, maxErrorsToShow).join('\n');
+      const moreErrors = processResult.errors.length > maxErrorsToShow ? `\n... e altri ${processResult.errors.length - maxErrorsToShow} errori` : '';
+      
+      showToast({
+        type: 'warning',
+        title: `${processResult.errors.length} progetti non caricati`,
+        message: `Alcuni progetti hanno valori non validi e sono stati ignorati:\n\n${errorList}${moreErrors}`,
+        duration: 8000,
+        action: {
+          label: 'Vedi tutti gli errori',
+          onClick: () => {
+            console.group('🚨 Errori nel caricamento CSV:');
+            processResult.errors.forEach((error: any, index: any) => {
+              console.warn(`${index + 1}. ${error}`);
+            });
+            console.groupEnd();
+            
+            showToast({
+              type: 'info',
+              title: 'Debug errori CSV',
+              message: `Lista completa di ${processResult.errors.length} errori salvata nella console del browser (F12)`,
+              duration: 5000
+            });
+          }
+        }
+      });
+    }
+  };
+
+  // 🧩 Funzione helper: Mostra toast di errore per fallimento processamento
+  const showFileProcessingError = (error: unknown) => {
+    console.error('Errore nel processamento file:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto nel processamento del file';
+    setError(`Errore nel processamento del file: ${errorMessage}`);
+    
+    showToast({
+      type: 'error',
+      title: 'Errore nel processamento file',
+      message: errorMessage,
+      duration: 6000
+    });
+  };
+  
+  // 🎯 FUNZIONE PRINCIPALE: Orchestrazione caricamento file
   const handleNewFileLoad = (result: FileUploadResult) => {
     console.log(`File caricato tramite FileUploader: ${result.fileName} (${result.fileType.toUpperCase()})`);
     
@@ -1008,86 +1373,26 @@ const Dashboard = () => {
       console.log('Excel lines count:', result.content.split('\n').length);
     }
     
-    // Reset filtri quando si carica un nuovo file
-    setSelectedTeamMembers([]);
-    setSelectedStreams([]);
-    setSelectedStatus([]);
-    setSelectedType([]);
-    setSelectedQuarter('');
-    
     try {
-      console.log('Processamento nuovo file tramite FileUploader...');
-      const processResult = processCSV(result.content, dateRange, [], [], [], []);
+      // 1️⃣ Validazione file
+      if (!validateFileUpload(result)) return;
       
-      setDashboardData(processResult.data);
-      setCsvData(result.content);
+      // 2️⃣ Reset filtri
+      resetFiltersForNewFile();
       
-      const now = new Date().toLocaleString('it-IT');
-      setLastUpdate(now);
+      // 3️⃣ Processamento e salvataggio
+      const processResult = processAndSaveFile(result);
+      if (!processResult) return;
       
-      // Salva dati nel localStorage
-      localStorage.setItem('team-dashboard-data', JSON.stringify(processResult.data));
-      localStorage.setItem('team-dashboard-csv', result.content);
-      localStorage.setItem('team-dashboard-lastUpdate', now);
+      // 4️⃣ Gestione successo
+      showFileUploadSuccess(result, processResult);
       
-      console.log(`File caricato con successo: ${processResult.data.teamMembers.length} membri, ${processResult.data.totalTeamProjects} progetti`);
-      
-      // Reset errore
-      setError(null);
-      
-      // Mostra toast di successo
-      showToast({
-        type: 'success',
-        title: 'File caricato con successo!',
-        message: `Processati ${processResult.data.teamMembers.length} membri e ${processResult.data.totalTeamProjects} progetti da ${result.fileType.toUpperCase()}`,
-        duration: 4000
-      });
-      
-      // Chiudi la modale
-      setShowUploadModal(false);
-      
-      // Se ci sono errori nel parsing, mostra anche un toast di warning
-      if (processResult.errors.length > 0) {
-        const maxErrorsToShow = 5;
-        const errorList = processResult.errors.slice(0, maxErrorsToShow).join('\n');
-        const moreErrors = processResult.errors.length > maxErrorsToShow ? `\n... e altri ${processResult.errors.length - maxErrorsToShow} errori` : '';
-        
-        showToast({
-          type: 'warning',
-          title: `${processResult.errors.length} progetti non caricati`,
-          message: `Alcuni progetti hanno valori non validi e sono stati ignorati:\n\n${errorList}${moreErrors}`,
-          duration: 8000,
-          action: {
-            label: 'Vedi tutti gli errori',
-            onClick: () => {
-              console.group('🚨 Errori nel caricamento CSV:');
-              processResult.errors.forEach((error, index) => {
-                console.warn(`${index + 1}. ${error}`);
-              });
-              console.groupEnd();
-              
-              showToast({
-                type: 'info',
-                title: 'Debug errori CSV',
-                message: `Lista completa di ${processResult.errors.length} errori salvata nella console del browser (F12)`,
-                duration: 5000
-              });
-            }
-          }
-        });
-      }
+      // 5️⃣ Gestione errori di processamento
+      handleFileProcessingErrors(processResult);
       
     } catch (error) {
-      console.error('Errore nel processamento file:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto nel processamento del file';
-      setError(`Errore nel processamento del file: ${errorMessage}`);
-      
-      showToast({
-        type: 'error',
-        title: 'Errore nel processamento file',
-        message: errorMessage,
-        duration: 6000
-      });
+      // 6️⃣ Gestione errori fatali
+      showFileProcessingError(error);
     }
   };
 
@@ -1199,409 +1504,467 @@ const Dashboard = () => {
     );
   };
 
+  // ========================================
+  // 🧩 FILTER UTILITIES HELPERS: Da estrarre in filterUtils
+  // ========================================
+
+  // 🧩 Funzione helper: Verifica se è stato selezionato un singolo mese
+  const isMonthFilter = () => {
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+    const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+    const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    
+    return start.getTime() === startOfMonth.getTime() && 
+           end.getTime() === endOfMonth.getTime();
+  };
+
+  // 🧩 Funzione helper: Reset del range di date al periodo completo
+  const resetToFullRange = () => {
+    setDateRange({
+      start: '2025-04-01',
+      end: '2026-03-31'
+    });
+  };
+
+  // 🧩 Funzione helper: Pulisce tutti i filtri attivi
+  const clearAllFilters = () => {
+    const hadFilters = selectedTeamMembers.length > 0 || selectedStreams.length > 0 || selectedStatus.length > 0 || selectedType.length > 0 || selectedQuarter !== '';
+    
+    setDateRange({
+      start: '2025-04-01',
+      end: '2026-03-31'
+    });
+    setSelectedTeamMembers([]);
+    setSelectedQuarter('');
+    setSelectedStreams([]);
+    setSelectedStatus([]);
+    setSelectedType([]);
+    
+    if (hadFilters) {
+      showToast({
+        type: 'info',
+        title: 'Filtri rimossi',
+        message: 'Tutti i filtri sono stati rimossi. Visualizzando tutti i dati.',
+        duration: 3000
+      });
+    }
+  };
+
+  // ========================================
+  // 🧩 CSV DATA PARSERS HELPERS: Da estrarre in csvParsers
+  // ========================================
+
+  // 🧩 Funzione helper: Ottieni tutti i membri unici dai dati CSV
+  const getAllMembers = (): string[] => {
+    try {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      
+      if (lines.length < 2) return [];
+      
+      const members = new Set<string>();
+      
+      lines.slice(1).forEach((line, index) => {
+        try {
+          const values = line.split(';');
+          const teamMember = values[2]?.trim();
+          if (teamMember && teamMember !== '') {
+            members.add(teamMember);
+          }
+        } catch (error) {
+          console.warn(`Errore nel parsing membro alla riga ${index + 2}:`, error);
+        }
+      });
+      
+      return Array.from(members).sort();
+    } catch (error) {
+      console.error('Errore nel recupero membri:', error);
+      return [];
+    }
+  };
+
+  // 🧩 Funzione helper: Ottieni tutti gli stream unici dai dati CSV
+  const getAllStreams = (): string[] => {
+    try {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      
+      if (lines.length < 2) return [];
+      
+      const streams = new Set<string>();
+      
+      lines.slice(1).forEach((line, index) => {
+        try {
+          const values = line.split(';');
+          const stream = values[1]?.trim();
+          if (stream && stream !== '') {
+            streams.add(stream);
+          }
+        } catch (error) {
+          console.warn(`Errore nel parsing stream alla riga ${index + 2}:`, error);
+        }
+      });
+      
+      return Array.from(streams).sort();
+    } catch (error) {
+      console.error('Errore nel recupero stream:', error);
+      return [];
+    }
+  };
+
+  // 🧩 Funzione helper: Ottieni tutti gli status unici dai dati CSV
+  const getAllStatus = (): string[] => {
+    try {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      
+      if (lines.length < 2) return [];
+      
+      const statuses = new Set<string>();
+      
+      lines.slice(1).forEach((line, index) => {
+        try {
+          const values = line.split(';');
+          const status = values[5]?.trim(); // Status è nella colonna 5
+          if (status && status !== '') {
+            statuses.add(status);
+          }
+        } catch (error) {
+          console.warn(`Errore nel parsing status alla riga ${index + 2}:`, error);
+        }
+      });
+      
+      return Array.from(statuses).sort();
+    } catch (error) {
+      console.error('Errore nel recupero status:', error);
+      return [];
+    }
+  };
+
+  // 🧩 Funzione helper: Ottieni tutti i types unici dai dati CSV
+  const getAllTypes = (): string[] => {
+    try {
+      if (!csvData) return [];
+      const lines = csvData.trim().split('\n');
+      
+      if (lines.length < 2) return [];
+      
+      const types = new Set<string>();
+      
+      lines.slice(1).forEach((line, index) => {
+        try {
+          const values = line.split(';');
+          const type = values[11]?.trim(); // Type è nella colonna 11
+          if (type && type !== '') {
+            types.add(type);
+          }
+        } catch (error) {
+          console.warn(`Errore nel parsing type alla riga ${index + 2}:`, error);
+        }
+      });
+      
+      return Array.from(types).sort();
+    } catch (error) {
+      console.error('Errore nel recupero types:', error);
+      return [];
+    }
+  };
+
+  // ========================================
+  // 🧩 TOGGLE HANDLERS HELPERS: Da estrarre in toggleHandlers
+  // ========================================
+
+  // 🧩 Funzione helper: Toggle selezione membro
+  const toggleMember = (member: string) => {
+    try {
+      if (!member || member.trim() === '') return;
+      
+      setSelectedTeamMembers(prev => {
+        const updated = prev.includes(member) 
+          ? prev.filter(m => m !== member)
+          : [...prev, member];
+        
+        console.log('Membri selezionati aggiornati:', updated);
+        
+        // Mostra toast informativo se vengono combinati filtri
+        if (updated.length > 0 && selectedStreams.length > 0) {
+          showToast({
+            type: 'info',
+            title: 'Filtri combinati applicati',
+            message: `Visualizzando dati per membro "${member}" e ${selectedStreams.length} stream selezionat${selectedStreams.length === 1 ? 'o' : 'i'}`,
+            duration: 3000
+          });
+        }
+        
+        return updated;
+      });
+    } catch (error) {
+      console.error('Errore nel toggle membro:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Toggle selezione stream
+  const toggleStream = (stream: string) => {
+    try {
+      if (!stream || stream.trim() === '') return;
+      
+      setSelectedStreams(prev => {
+        const updated = prev.includes(stream) 
+          ? prev.filter(s => s !== stream)
+          : [...prev, stream];
+        
+        console.log('Stream selezionati aggiornati:', updated);
+        return updated;
+      });
+    } catch (error) {
+      console.error('Errore nel toggle stream:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Toggle selezione status
+  const toggleStatus = (status: string) => {
+    try {
+      if (!status || status.trim() === '') return;
+      
+      setSelectedStatus(prev => {
+        const updated = prev.includes(status) 
+          ? prev.filter(s => s !== status)
+          : [...prev, status];
+        
+        console.log('Status selezionati aggiornati:', updated);
+        return updated;
+      });
+    } catch (error) {
+      console.error('Errore nel toggle status:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Toggle selezione type
+  const toggleType = (type: string) => {
+    try {
+      if (!type || type.trim() === '') return;
+      
+      setSelectedType(prev => {
+        const updated = prev.includes(type) 
+          ? prev.filter(t => t !== type)
+          : [...prev, type];
+        
+        console.log('Types selezionati aggiornati:', updated);
+        return updated;
+      });
+    } catch (error) {
+      console.error('Errore nel toggle type:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Seleziona/Deseleziona tutti i membri
+  const toggleAllMembers = () => {
+    try {
+      const allMembers = getAllMembers();
+      const allValidMembers = allMembers.filter(m => m && m.trim() !== '');
+      
+      if (selectedTeamMembers.length === allValidMembers.length) {
+        setSelectedTeamMembers([]);
+        console.log('Deselezionati tutti i membri');
+      } else {
+        setSelectedTeamMembers([...allValidMembers]);
+        console.log('Selezionati tutti i membri:', allValidMembers.length);
+      }
+    } catch (error) {
+      console.error('Errore nel toggle tutti i membri:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Seleziona/Deseleziona tutti gli stream
+  const toggleAllStreams = () => {
+    try {
+      const allStreams = getAllStreams();
+      const allValidStreams = allStreams.filter(s => s && s.trim() !== '');
+      
+      if (selectedStreams.length === allValidStreams.length) {
+        setSelectedStreams([]);
+        console.log('Deselezionati tutti gli stream');
+      } else {
+        setSelectedStreams([...allValidStreams]);
+        console.log('Selezionati tutti gli stream:', allValidStreams.length);
+      }
+    } catch (error) {
+      console.error('Errore nel toggle tutti gli stream:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Seleziona/Deseleziona tutti gli status
+  const toggleAllStatus = () => {
+    try {
+      const allStatus = getAllStatus();
+      const allValidStatus = allStatus.filter(s => s && s.trim() !== '');
+      
+      if (selectedStatus.length === allValidStatus.length) {
+        setSelectedStatus([]);
+        console.log('Deselezionati tutti gli status');
+      } else {
+        setSelectedStatus([...allValidStatus]);
+        console.log('Selezionati tutti gli status:', allValidStatus.length);
+      }
+    } catch (error) {
+      console.error('Errore nel toggle tutti gli status:', error);
+    }
+  };
+
+  // 🧩 Funzione helper: Seleziona/Deseleziona tutti i types
+  const toggleAllTypes = () => {
+    try {
+      const allTypes = getAllTypes();
+      const allValidTypes = allTypes.filter(t => t && t.trim() !== '');
+      
+      if (selectedType.length === allValidTypes.length) {
+        setSelectedType([]);
+        console.log('Deselezionati tutti i types');
+      } else {
+        setSelectedType([...allValidTypes]);
+        console.log('Selezionati tutti i types:', allValidTypes.length);
+      }
+    } catch (error) {
+      console.error('Errore nel toggle tutti i types:', error);
+    }
+  };
+
+  // ========================================
+  // 🧩 INLINE COMPONENT HELPER: MultiSelectDropdown
+  // TODO FASE 2: Estrarre in components/ui/MultiSelectDropdown.tsx
+  // ========================================
+
+  // 🧩 Componente helper: Dropdown per Multi-select
+  const MultiSelectDropdown = ({ 
+    title, 
+    selectedItems, 
+    allItems, 
+    onToggleItem, 
+    onToggleAll, 
+    isOpen, 
+    setIsOpen 
+  }: {
+    title: string;
+    selectedItems: string[];
+    allItems: string[];
+    onToggleItem: (item: string) => void;
+    onToggleAll: () => void;
+    isOpen: boolean;
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  }) => {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-left cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-700">
+              {selectedItems.length === 0 
+                ? `Tutti i ${title.toLowerCase()}` 
+                : selectedItems.length === allItems.length
+                ? `Tutti i ${title.toLowerCase()} (${selectedItems.length})`
+                : `${selectedItems.length} ${title.toLowerCase()} selezionati`
+              }
+            </span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {isOpen && (
+          <>
+            {/* Backdrop per chiudere il dropdown */}
+            <div 
+              className="fixed inset-0 z-10" 
+              onClick={() => setIsOpen(false)}
+            />
+            
+            {/* Dropdown content */}
+            <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {/* Seleziona tutti */}
+              <div className="px-3 py-2 border-b border-gray-200">
+                <label className="flex items-center cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.length === allItems.length}
+                    onChange={onToggleAll}
+                    className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-900">
+                    Seleziona tutti ({allItems.length})
+                  </span>
+                </label>
+              </div>
+
+              {/* Lista items */}
+              <div className="py-1">
+                {allItems.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(item)}
+                      onChange={() => onToggleItem(item)}
+                      className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 truncate" title={item}>
+                      {item}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // ========================================
+  // 🔽 COMPONENTE GRANDE: FilterPanel (~500 righe → ~150 righe)
+  // ✅ FASE 2: Spezzata con successo in funzioni helper:
+  // - isMonthFilter() ✅
+  // - resetToFullRange() ✅
+  // - clearAllFilters() ✅
+  // - getAllMembers() ✅
+  // - getAllStreams() ✅
+  // - getAllStatus() ✅
+  // - getAllTypes() ✅
+  // - toggleMember() ✅
+  // - toggleStream() ✅
+  // - toggleStatus() ✅
+  // - toggleType() ✅
+  // - toggleAllMembers() ✅
+  // - toggleAllStreams() ✅
+  // - toggleAllStatus() ✅
+  // - toggleAllTypes() ✅
+  // - MultiSelectDropdown() ✅
+  // ========================================
+  
   // Componente per i filtri
   const FilterPanel = () => {
-    // Verifica se è stato selezionato un singolo mese
-    const isMonthFilter = () => {
-      const start = new Date(dateRange.start);
-      const end = new Date(dateRange.end);
-      const startOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
-      const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-      
-      return start.getTime() === startOfMonth.getTime() && 
-             end.getTime() === endOfMonth.getTime();
-    };
 
-    const resetToFullRange = () => {
-      setDateRange({
-        start: '2025-04-01',
-        end: '2026-03-31'
-      });
-    };
-
-    const clearAllFilters = () => {
-      const hadFilters = selectedTeamMembers.length > 0 || selectedStreams.length > 0 || selectedStatus.length > 0 || selectedType.length > 0 || selectedQuarter !== '';
-      
-      setDateRange({
-        start: '2025-04-01',
-        end: '2026-03-31'
-      });
-      setSelectedTeamMembers([]);
-      setSelectedQuarter('');
-      setSelectedStreams([]);
-      setSelectedStatus([]);
-      setSelectedType([]);
-      
-      if (hadFilters) {
-        showToast({
-          type: 'info',
-          title: 'Filtri rimossi',
-          message: 'Tutti i filtri sono stati rimossi. Visualizzando tutti i dati.',
-          duration: 3000
-        });
-      }
-    };
-
-    // Ottieni tutti i membri unici dai dati CSV
-    const getAllMembers = (): string[] => {
-      try {
-        if (!csvData) return [];
-        const lines = csvData.trim().split('\n');
-        
-        if (lines.length < 2) return [];
-        
-        const members = new Set<string>();
-        
-        lines.slice(1).forEach((line, index) => {
-          try {
-            const values = line.split(';');
-            const teamMember = values[2]?.trim();
-            if (teamMember && teamMember !== '') {
-              members.add(teamMember);
-            }
-          } catch (error) {
-            console.warn(`Errore nel parsing membro alla riga ${index + 2}:`, error);
-          }
-        });
-        
-        return Array.from(members).sort();
-      } catch (error) {
-        console.error('Errore nel recupero membri:', error);
-        return [];
-      }
-    };
-
-    // Ottieni tutti gli stream unici dai dati CSV
-    const getAllStreams = (): string[] => {
-      try {
-        if (!csvData) return [];
-        const lines = csvData.trim().split('\n');
-        
-        if (lines.length < 2) return [];
-        
-        const streams = new Set<string>();
-        
-        lines.slice(1).forEach((line, index) => {
-          try {
-            const values = line.split(';');
-            const stream = values[1]?.trim();
-            if (stream && stream !== '') {
-              streams.add(stream);
-            }
-          } catch (error) {
-            console.warn(`Errore nel parsing stream alla riga ${index + 2}:`, error);
-          }
-        });
-        
-        return Array.from(streams).sort();
-      } catch (error) {
-        console.error('Errore nel recupero stream:', error);
-        return [];
-      }
-    };
-
-    // Ottieni tutti gli status unici dai dati CSV
-    const getAllStatus = (): string[] => {
-      try {
-        if (!csvData) return [];
-        const lines = csvData.trim().split('\n');
-        
-        if (lines.length < 2) return [];
-        
-        const statuses = new Set<string>();
-        
-        lines.slice(1).forEach((line, index) => {
-          try {
-            const values = line.split(';');
-            const status = values[5]?.trim(); // Status è nella colonna 5
-            if (status && status !== '') {
-              statuses.add(status);
-            }
-          } catch (error) {
-            console.warn(`Errore nel parsing status alla riga ${index + 2}:`, error);
-          }
-        });
-        
-        return Array.from(statuses).sort();
-      } catch (error) {
-        console.error('Errore nel recupero status:', error);
-        return [];
-      }
-    };
-
-    // Ottieni tutti i types unici dai dati CSV
-    const getAllTypes = (): string[] => {
-      try {
-        if (!csvData) return [];
-        const lines = csvData.trim().split('\n');
-        
-        if (lines.length < 2) return [];
-        
-        const types = new Set<string>();
-        
-        lines.slice(1).forEach((line, index) => {
-          try {
-            const values = line.split(';');
-            const type = values[11]?.trim(); // Type è nella colonna 11
-            if (type && type !== '') {
-              types.add(type);
-            }
-          } catch (error) {
-            console.warn(`Errore nel parsing type alla riga ${index + 2}:`, error);
-          }
-        });
-        
-        return Array.from(types).sort();
-      } catch (error) {
-        console.error('Errore nel recupero types:', error);
-        return [];
-      }
-    };
-
+    // Ottieni dati dai helper esterni
     const allMembers = getAllMembers();
     const allStreams = getAllStreams();
     const allStatus = getAllStatus();
     const allTypes = getAllTypes();
 
-    // Toggle member selection
-    const toggleMember = (member: string) => {
-      try {
-        if (!member || member.trim() === '') return;
-        
-        setSelectedTeamMembers(prev => {
-          const updated = prev.includes(member) 
-            ? prev.filter(m => m !== member)
-            : [...prev, member];
-          
-          console.log('Membri selezionati aggiornati:', updated);
-          
-          // Mostra toast informativo se vengono combinati filtri
-          if (updated.length > 0 && selectedStreams.length > 0) {
-            showToast({
-              type: 'info',
-              title: 'Filtri combinati applicati',
-              message: `Visualizzando dati per membro "${member}" e ${selectedStreams.length} stream selezionat${selectedStreams.length === 1 ? 'o' : 'i'}`,
-              duration: 3000
-            });
-          }
-          
-          return updated;
-        });
-      } catch (error) {
-        console.error('Errore nel toggle membro:', error);
-      }
-    };
-
-    // Toggle stream selection
-    const toggleStream = (stream: string) => {
-      try {
-        if (!stream || stream.trim() === '') return;
-        
-        setSelectedStreams(prev => {
-          const updated = prev.includes(stream) 
-            ? prev.filter(s => s !== stream)
-            : [...prev, stream];
-          
-          console.log('Stream selezionati aggiornati:', updated);
-          return updated;
-        });
-      } catch (error) {
-        console.error('Errore nel toggle stream:', error);
-      }
-    };
-
-    // Toggle status selection
-    const toggleStatus = (status: string) => {
-      try {
-        if (!status || status.trim() === '') return;
-        
-        setSelectedStatus(prev => {
-          const updated = prev.includes(status) 
-            ? prev.filter(s => s !== status)
-            : [...prev, status];
-          
-          console.log('Status selezionati aggiornati:', updated);
-          return updated;
-        });
-      } catch (error) {
-        console.error('Errore nel toggle status:', error);
-      }
-    };
-
-    // Toggle type selection
-    const toggleType = (type: string) => {
-      try {
-        if (!type || type.trim() === '') return;
-        
-        setSelectedType(prev => {
-          const updated = prev.includes(type) 
-            ? prev.filter(t => t !== type)
-            : [...prev, type];
-          
-          console.log('Types selezionati aggiornati:', updated);
-          return updated;
-        });
-      } catch (error) {
-        console.error('Errore nel toggle type:', error);
-      }
-    };
-
-    // Select/Deselect all members
-    const toggleAllMembers = () => {
-      try {
-        const allValidMembers = allMembers.filter(m => m && m.trim() !== '');
-        
-        if (selectedTeamMembers.length === allValidMembers.length) {
-          setSelectedTeamMembers([]);
-          console.log('Deselezionati tutti i membri');
-        } else {
-          setSelectedTeamMembers([...allValidMembers]);
-          console.log('Selezionati tutti i membri:', allValidMembers.length);
-        }
-      } catch (error) {
-        console.error('Errore nel toggle tutti i membri:', error);
-      }
-    };
-
-    // Select/Deselect all streams
-    const toggleAllStreams = () => {
-      try {
-        const allValidStreams = allStreams.filter(s => s && s.trim() !== '');
-        
-        if (selectedStreams.length === allValidStreams.length) {
-          setSelectedStreams([]);
-          console.log('Deselezionati tutti gli stream');
-        } else {
-          setSelectedStreams([...allValidStreams]);
-          console.log('Selezionati tutti gli stream:', allValidStreams.length);
-        }
-      } catch (error) {
-        console.error('Errore nel toggle tutti gli stream:', error);
-      }
-    };
-
-    // Select/Deselect all status
-    const toggleAllStatus = () => {
-      try {
-        const allValidStatus = allStatus.filter(s => s && s.trim() !== '');
-        
-        if (selectedStatus.length === allValidStatus.length) {
-          setSelectedStatus([]);
-          console.log('Deselezionati tutti gli status');
-        } else {
-          setSelectedStatus([...allValidStatus]);
-          console.log('Selezionati tutti gli status:', allValidStatus.length);
-        }
-      } catch (error) {
-        console.error('Errore nel toggle tutti gli status:', error);
-      }
-    };
-
-    // Select/Deselect all types
-    const toggleAllTypes = () => {
-      try {
-        const allValidTypes = allTypes.filter(t => t && t.trim() !== '');
-        
-        if (selectedType.length === allValidTypes.length) {
-          setSelectedType([]);
-          console.log('Deselezionati tutti i types');
-        } else {
-          setSelectedType([...allValidTypes]);
-          console.log('Selezionati tutti i types:', allValidTypes.length);
-        }
-      } catch (error) {
-        console.error('Errore nel toggle tutti i types:', error);
-      }
-    };
-
-    // Componente Dropdown per Multi-select
-    const MultiSelectDropdown = ({ 
-      title, 
-      selectedItems, 
-      allItems, 
-      onToggleItem, 
-      onToggleAll, 
-      isOpen, 
-      setIsOpen 
-    }: {
-      title: string;
-      selectedItems: string[];
-      allItems: string[];
-      onToggleItem: (item: string) => void;
-      onToggleAll: () => void;
-      isOpen: boolean;
-      setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    }) => {
-      return (
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-left cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">
-                {selectedItems.length === 0 
-                  ? `Tutti i ${title.toLowerCase()}` 
-                  : selectedItems.length === allItems.length
-                  ? `Tutti i ${title.toLowerCase()} (${selectedItems.length})`
-                  : `${selectedItems.length} ${title.toLowerCase()} selezionati`
-                }
-              </span>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {isOpen && (
-            <>
-              {/* Backdrop per chiudere il dropdown */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsOpen(false)}
-              />
-              
-              {/* Dropdown content */}
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {/* Seleziona tutti */}
-                <div className="px-3 py-2 border-b border-gray-200">
-                  <label className="flex items-center cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.length === allItems.length}
-                      onChange={onToggleAll}
-                      className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-900">
-                      Seleziona tutti ({allItems.length})
-                    </span>
-                  </label>
-                </div>
-
-                {/* Lista items */}
-                <div className="py-1">
-                  {allItems.map((item) => (
-                    <label
-                      key={item}
-                      className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.includes(item)}
-                        onChange={() => onToggleItem(item)}
-                        className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-700 truncate" title={item}>
-                        {item}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
-    };
+    // ========================================
+    // 🎨 RENDER FILTERPANEL 
+    // TODO FASE 2: Spezzare in sotto-componenti:
+    // - DateRangeFilter
+    // - MemberDropdown  
+    // - StreamDropdown
+    // - StatusDropdown
+    // - TypeDropdown
+    // - QuarterChips
+    // - ClearFiltersButton
+    // ========================================
 
     return (
       <div className="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -1756,43 +2119,52 @@ const Dashboard = () => {
     );
   };
 
-  // Componente per la sezione membri del team
-  const TeamMembersSection = () => {
-    const getStatusInfo = (workPressure: number) => {
-      if (workPressure > 100) {
-        return { status: 'Sovraccarico', color: 'text-red-600', bgColor: 'bg-red-100', dotColor: 'bg-red-500' };
-      } else if (workPressure > 80) {
-        return { status: 'Occupato', color: 'text-yellow-600', bgColor: 'bg-yellow-100', dotColor: 'bg-yellow-500' };
-      } else {
-        return { status: 'Disponibile', color: 'text-green-600', bgColor: 'bg-green-100', dotColor: 'bg-green-500' };
-      }
-    };
+  // ========================================
+  // 🧩 MEMBER UTILITIES HELPERS: Da estrarre in memberUtils
+  // ========================================
 
-    const handleMemberCardClick = (memberName: string) => {
-      if (selectedMemberForCard === memberName) {
-        // Se clicco di nuovo sulla stessa card, aggiorno la dashboard (applico filtro)
-        setSelectedTeamMembers([memberName]);
-        setSelectedMemberForCard('');
-      } else {
-        // Apro la card del membro
-        setSelectedMemberForCard(memberName);
-      }
-    };
+  // 🧩 Funzione helper: Ottieni informazioni di status basate sulla pressione di lavoro
+  const getStatusInfo = (workPressure: number) => {
+    if (workPressure > 100) {
+      return { status: 'Sovraccarico', color: 'text-red-600', bgColor: 'bg-red-100', dotColor: 'bg-red-500' };
+    } else if (workPressure > 80) {
+      return { status: 'Occupato', color: 'text-yellow-600', bgColor: 'bg-yellow-100', dotColor: 'bg-yellow-500' };
+    } else {
+      return { status: 'Disponibile', color: 'text-green-600', bgColor: 'bg-green-100', dotColor: 'bg-green-500' };
+    }
+  };
 
-    // Funzione per gestire l'ordinamento - usa lo stato globale
-    const handleSort = (column: string) => {
-      if (membersSortColumn === column) {
-        // Se è la stessa colonna, cambia direzione
-        setMembersSortDirection(membersSortDirection === 'asc' ? 'desc' : 'asc');
-      } else {
-        // Se è una nuova colonna, imposta ascendente
-        setMembersSortColumn(column);
-        setMembersSortDirection('asc');
-      }
-    };
+  // 🧩 Funzione helper: Gestisce il click sulla card di un membro
+  const handleMemberCardClick = (memberName: string) => {
+    if (selectedMemberForCard === memberName) {
+      // Se clicco di nuovo sulla stessa card, aggiorno la dashboard (applico filtro)
+      setSelectedTeamMembers([memberName]);
+      setSelectedMemberForCard('');
+    } else {
+      // Apro la card del membro
+      setSelectedMemberForCard(memberName);
+    }
+  };
 
-    // Applica i filtri globali ai membri del team
-    const filteredMembers = dashboardData?.teamMembers.filter(member => {
+  // ========================================
+  // 🧩 SORTING LOGIC HELPERS: Da estrarre in sortingUtils
+  // ========================================
+
+  // 🧩 Funzione helper: Gestisce l'ordinamento delle colonne
+  const handleSort = (column: string) => {
+    if (membersSortColumn === column) {
+      // Se è la stessa colonna, cambia direzione
+      setMembersSortDirection(membersSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Se è una nuova colonna, imposta ascendente
+      setMembersSortColumn(column);
+      setMembersSortDirection('asc');
+    }
+  };
+
+  // 🧩 Funzione helper: Applica filtri ai membri del team
+  const getFilteredMembers = () => {
+    return dashboardData?.teamMembers.filter(member => {
       // Se ci sono filtri membri attivi, mostra solo quei membri
       if (selectedTeamMembers.length > 0) {
         return selectedTeamMembers.includes(member.name);
@@ -1800,9 +2172,11 @@ const Dashboard = () => {
       // Altrimenti mostra tutti i membri (potrebbero essere già filtrati per data)
       return true;
     }) || [];
+  };
 
-    // Applica l'ordinamento - usa lo stato globale
-    const sortedMembers = [...filteredMembers].sort((a, b) => {
+  // 🧩 Funzione helper: Applica ordinamento ai membri filtrati
+  const getSortedMembers = (filteredMembers: any[]) => {
+    return [...filteredMembers].sort((a, b) => {
       if (!membersSortColumn) return 0;
 
       let aValue: any, bValue: any;
@@ -1840,36 +2214,68 @@ const Dashboard = () => {
       if (aValue > bValue) return membersSortDirection === 'asc' ? 1 : -1;
       return 0;
     });
+  };
 
+  // ========================================
+  // 🧩 INLINE COMPONENT HELPER: SortableHeader
+  // TODO FASE 2: Estrarre in components/ui/SortableHeader.tsx
+  // ========================================
+
+  // 🧩 Componente helper: Intestazione ordinabile per tabelle
+  const SortableHeader = ({ column, children }: { column: string; children: React.ReactNode }) => (
+    <th 
+      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center justify-between">
+        <span>{children}</span>
+        <div className="flex flex-col ml-1">
+          <svg 
+            className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'asc' ? 'text-blue-600' : 'text-gray-300'}`}
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          <svg 
+            className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'desc' ? 'text-blue-600' : 'text-gray-300'}`}
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </div>
+      </div>
+    </th>
+  );
+
+  // ========================================
+  // 🔽 COMPONENTE GRANDE: TeamMembersSection (~360 righe → ~120 righe)
+  // ✅ FASE 2: Spezzata con successo in funzioni helper:
+  // - getStatusInfo() ✅
+  // - handleMemberCardClick() ✅  
+  // - handleSort() ✅
+  // - getFilteredMembers() ✅
+  // - getSortedMembers() ✅
+  // - SortableHeader() ✅
+  // ========================================
+  
+  // Componente per la sezione membri del team
+  const TeamMembersSection = () => {
+
+    // Usa le funzioni helper estratte
+    const filteredMembers = getFilteredMembers();
+    const sortedMembers = getSortedMembers(filteredMembers);
     const selectedMember = sortedMembers.find(m => m.name === selectedMemberForCard);
 
-    // Componente per le intestazioni ordinabili - usa lo stato globale
-    const SortableHeader = ({ column, children }: { column: string; children: React.ReactNode }) => (
-      <th 
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-        onClick={() => handleSort(column)}
-      >
-        <div className="flex items-center justify-between">
-          <span>{children}</span>
-          <div className="flex flex-col ml-1">
-            <svg 
-              className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'asc' ? 'text-blue-600' : 'text-gray-300'}`}
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            <svg 
-              className={`w-3 h-3 ${membersSortColumn === column && membersSortDirection === 'desc' ? 'text-blue-600' : 'text-gray-300'}`}
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </th>
-    );
+    // ========================================
+    // 🎨 RENDER TEAMMEMBERSSECTION
+    // TODO FASE 2: Spezzare in sotto-componenti:
+    // - TeamMembersTable
+    // - TeamMemberCard
+    // - MemberDetailPanel  
+    // - EmptyState
+    // ========================================
 
     return (
       <div>
@@ -2078,7 +2484,7 @@ const Dashboard = () => {
                   <div className="space-y-4">
                     <h6 className="text-lg font-semibold text-gray-800">Distribuzione Stream</h6>
                     <div className="space-y-3">
-                      {selectedMember.streams.map((stream, index) => (
+                      {selectedMember.streams.map((stream: any, index: number) => (
                         <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
                           <div className="flex items-center gap-4">
                             <div 

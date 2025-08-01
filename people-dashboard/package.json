@@ -2,7 +2,7 @@
   "name": "people-dashboard",
   "productName": "People Dashboard",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.5.0",
   "main": "electron/main.js",
   "type": "module",
   "scripts": {
