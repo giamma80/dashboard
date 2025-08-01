@@ -9,6 +9,30 @@
 
 🌐 **[PROVA LA DEMO LIVE](https://giamma80.github.io/dashboard/)** | 📦 **[SCARICA L'APP DESKTOP](https://github.com/giamma80/dashboard/releases/latest)**
 
+## 🚀 Novità v2.4.0 - UI/UX Revolution!
+
+### 🎨 **Redesign Header & Upload Experience**
+- ✅ **Header Elegante** - Design pulito con icona upload professionale
+- ✅ **Modal Upload** - Sistema modale per caricamento file più intuitivo
+- ✅ **Tooltip Potenziati** - Pie chart mostrano percentuali al mouse over
+- ✅ **Filtri Ottimizzati** - Dimensioni ridotte per miglior utilizzo spazio
+- ✅ **UX Seamless** - Chiusura automatica modale dopo upload riuscito
+
+### 🎯 **Miglioramenti Visual & Interaction**
+- **📊 Pie Chart Enhanced**: Tooltip mostrano sia count che percentuale
+- **🎛️ Filter Optimization**: Ridotta larghezza filtri (min-w-60 → min-w-52)
+- **🔄 Modal Architecture**: Upload tramite modale elegante invece di inline
+- **✨ Hover Effects**: Animazioni icone e feedback visivo migliorato
+- **🧹 Clean Header**: Rimosso download button, focus su funzionalità core
+
+### 🛠️ **Benefici Immediati**
+- **⚡ Spazio Ottimizzato**: Più spazio disponibile per contenuti dashboard
+- **🎯 Focus Utente**: Interfaccia meno cluttered, più professionale
+- **📱 Mobile Friendly**: Design responsive ottimizzato
+- **💼 Enterprise Look**: Aspetto più pulito e aziendale
+
+---
+
 ## 🚀 Novità v2.3.2 - Portabilità Massima!
 
 ### 🎯 **App Desktop Truly Portable**
@@ -43,10 +67,10 @@ Accedi subito alla dashboard online: **[https://giamma80.github.io/dashboard/](h
 ### 💻 **App Desktop per Windows**
 Scarica l'applicazione desktop dalla [pagina delle release](https://github.com/giamma80/dashboard/releases/latest):
 
-- **🔧 People.Dashboard.Setup.2.3.4.exe** - Installer completo con wizard
-- **📦 People.Dashboard.2.3.4.Portable.x64.exe** - Versione portable x64 (consigliata)
-- **📦 People.Dashboard.2.3.4.Portable.ia32.exe** - Versione portable x86 (PC vecchi)
-- **📦 People.Dashboard.2.3.4.Portable.exe** - Versione portable universale
+- **🔧 People.Dashboard.Setup.2.4.0.exe** - Installer completo con wizard
+- **📦 People.Dashboard.2.4.0.Portable.x64.exe** - Versione portable x64 (consigliata)
+- **📦 People.Dashboard.2.4.0.Portable.ia32.exe** - Versione portable x86 (PC vecchi)
+- **📦 People.Dashboard.2.4.0.Portable.exe** - Versione portable universale
 
 > 💡 **Consiglio**: Per uso occasionale usa la versione web, per uso quotidiano scarica l'app desktop portable.
 
@@ -240,6 +264,36 @@ dashboard/
 ---
 
 # 📋 Changelog
+
+## [v2.4.0] - 2025-08-01
+### 🎨 **UI/UX REVOLUTION - HEADER & UPLOAD REDESIGN**
+- **✅ Header Elegante**: Nuovo design pulito con layout bilanciato
+- **✅ Modal Upload**: Sistema modale per caricamento file più intuitivo
+- **✅ Icon-Based UI**: Icona upload con hover effects e feedback visivo
+- **✅ Tooltip Enhanced**: Pie chart mostrano percentuali oltre ai conteggi
+- **✅ Filter Optimization**: Ridotta larghezza filtri per recuperare spazio
+
+### 🎯 **Miglioramenti Design**
+- **Clean Header**: Rimosso download button, focus su funzionalità essenziali
+- **Modal Experience**: Upload in modale separata con drag & drop
+- **Space Efficiency**: Filtri ridotti da min-w-60 a min-w-52
+- **Professional Look**: Design più pulito e aziendale
+- **Responsive UI**: Ottimizzazioni per dispositivi mobili
+
+### 🛠️ **Modifiche Tecniche**
+- **PieChartCard.tsx**: Implementato renderTooltip personalizzato per percentuali
+- **Dashboard.tsx**: Aggiunto showUploadModal state e logica modale
+- **UI Components**: Rimossa integrazione FileUploader dall'header
+- **Auto-close Modal**: Chiusura automatica dopo upload riuscito
+- **Icon Animation**: Effetti hover su icona upload con scale transform
+
+### 📋 **Risultati**
+- **🎯 UX Migliorata**: Interfaccia più pulita e professionale
+- **📊 Data Clarity**: Tooltip pie chart con informazioni complete
+- **⚡ Space Optimized**: Miglior utilizzo spazio orizzontale
+- **💡 Modal Pattern**: Pattern UI più moderno e intuitivo
+
+---
 
 ## [v2.1.1] - 2025-07-31
 ### 🐛 **CRITICAL FIXES - PROGETTI DUPLICATI**
