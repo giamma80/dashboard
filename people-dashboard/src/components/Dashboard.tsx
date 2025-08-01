@@ -6,6 +6,9 @@ import FileUploader from './FileUploader';
 import type { FileUploadResult, FileUploadError } from './FileUploader';
 import { StatusPieChart, PriorityPieChart, StreamPieChart, TypePieChart } from './PieChartCard';
 
+// Import dei componenti UI estratti
+import { WorkPressureGauge, MultiSelectDropdown } from './ui';
+
 // Import dei tipi centralizzati
 import type { 
   ProjectData, 
@@ -1109,96 +1112,6 @@ const Dashboard = () => {
     setIsLoading(true);
   };
 
-  // Componente Gauge per la pressione di lavoro
-  const WorkPressureGauge = ({ value, maxValue = 200, size = 120, title }: { 
-    value: number; 
-    maxValue?: number; 
-    size?: number; 
-    title: string;
-  }) => {
-    // Calcola la percentuale reale del valore rispetto al range 0-maxValue
-    const valuePercentage = Math.min((value / maxValue) * 100, 100);
-    
-    // L'arco va da -90° a +90° (180° totali)
-    // 0% = -90°, 100% = +90°
-    const needleAngle = -90 + (valuePercentage / 100) * 180;
-    
-    const getColor = (val: number) => {
-      if (val < 80) return '#10B981'; // Verde (sotto 80%)
-      if (val <= 100) return '#F59E0B'; // Giallo (80-100%)
-      return '#EF4444'; // Rosso (sopra 100%)
-    };
-
-    const radius = size / 2 - 20;
-    const centerX = size / 2;
-    const centerY = size / 2;
-    
-    // Calcola la lunghezza dell'arco da colorare
-    const arcLength = (valuePercentage / 100) * Math.PI * radius;
-    const totalArcLength = Math.PI * radius;
-
-    return (
-      <div className="flex flex-col items-center">
-        <div className="relative" style={{ width: size, height: size / 2 + 20 }}>
-          {/* Sfondo gauge - arco completo grigio */}
-          <svg width={size} height={size / 2 + 20} className="absolute">
-            {/* Arco di sfondo */}
-            <path
-              d={`M 20 ${centerY} A ${radius} ${radius} 0 0 1 ${size - 20} ${centerY}`}
-              fill="none"
-              stroke="#E5E7EB"
-              strokeWidth="8"
-              strokeLinecap="round"
-            />
-            
-            {/* Arco colorato - deve partire da sinistra */}
-            <path
-              d={`M 20 ${centerY} A ${radius} ${radius} 0 0 1 ${size - 20} ${centerY}`}
-              fill="none"
-              stroke={getColor(value)}
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${arcLength} ${totalArcLength}`}
-              strokeDashoffset="0"
-            />
-          </svg>
-          
-          {/* Ago - ruotato dall'angolo calcolato */}
-          <div 
-            className="absolute bg-gray-800 origin-bottom rounded-full"
-            style={{
-              width: '2px',
-              height: radius - 15,
-              left: centerX - 1,
-              bottom: 20,
-              transform: `rotate(${needleAngle}deg)`,
-              transformOrigin: 'bottom center'
-            }}
-          />
-          
-          {/* Centro - punto di rotazione */}
-          <div 
-            className="absolute w-4 h-4 bg-gray-800 rounded-full border-2 border-white"
-            style={{
-              left: centerX - 8,
-              bottom: 12
-            }}
-          />
-        </div>
-        
-        <div className="text-center mt-2">
-          <div className="text-sm font-medium text-gray-900">{title}</div>
-          <div className="text-xs text-gray-600">
-            {Math.round(value)}% {value > 200 ? '(Max 200%)' : value > 100 ? '(Overtime)' : ''}
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            Ore effettive / Ore disponibili
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Componente per i filtri
   const FilterPanel = () => {
     // Verifica se è stato selezionato un singolo mese
@@ -1512,95 +1425,6 @@ const Dashboard = () => {
       } catch (error) {
         console.error('Errore nel toggle tutti i types:', error);
       }
-    };
-
-    // Componente Dropdown per Multi-select
-    const MultiSelectDropdown = ({ 
-      title, 
-      selectedItems, 
-      allItems, 
-      onToggleItem, 
-      onToggleAll, 
-      isOpen, 
-      setIsOpen 
-    }: {
-      title: string;
-      selectedItems: string[];
-      allItems: string[];
-      onToggleItem: (item: string) => void;
-      onToggleAll: () => void;
-      isOpen: boolean;
-      setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    }) => {
-      return (
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-left cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">
-                {selectedItems.length === 0 
-                  ? `Tutti i ${title.toLowerCase()}` 
-                  : selectedItems.length === allItems.length
-                  ? `Tutti i ${title.toLowerCase()} (${selectedItems.length})`
-                  : `${selectedItems.length} ${title.toLowerCase()} selezionati`
-                }
-              </span>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {isOpen && (
-            <>
-              {/* Backdrop per chiudere il dropdown */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsOpen(false)}
-              />
-              
-              {/* Dropdown content */}
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {/* Seleziona tutti */}
-                <div className="px-3 py-2 border-b border-gray-200">
-                  <label className="flex items-center cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.length === allItems.length}
-                      onChange={onToggleAll}
-                      className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-900">
-                      Seleziona tutti ({allItems.length})
-                    </span>
-                  </label>
-                </div>
-
-                {/* Lista items */}
-                <div className="py-1">
-                  {allItems.map((item) => (
-                    <label
-                      key={item}
-                      className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.includes(item)}
-                        onChange={() => onToggleItem(item)}
-                        className="mr-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-700 truncate" title={item}>
-                        {item}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
     };
 
     return (
