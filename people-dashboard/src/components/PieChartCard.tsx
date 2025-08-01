@@ -47,6 +47,31 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
     return `hsl(${(index * 60 + colorSeed) % 360}, 70%, 60%)`;
   };
 
+  // Componente tooltip che ha accesso ai dati locali
+  const renderTooltip = (props: any) => {
+    const { active, payload } = props;
+    if (active && payload && payload.length) {
+      const currentData = payload[0];
+      
+      // Calcola il totale di tutti i valori per la percentuale
+      const total = data.reduce((sum: number, item: any) => sum + item.value, 0);
+      const percentage = total > 0 ? ((currentData.value / total) * 100).toFixed(1) : '0.0';
+      
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{currentData.name}</p>
+          <p className="text-sm text-gray-600">
+            Progetti: <span className="font-medium">{currentData.value}</span>
+          </p>
+          <p className="text-sm text-gray-600">
+            Percentuale: <span className="font-medium">{percentage}%</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className={`bg-white rounded-lg shadow-md p-8 ${className}`}>
       <h4 className="font-medium text-gray-900 mb-6 flex items-center gap-2">
@@ -70,7 +95,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({
               <Cell key={`cell-${index}`} fill={generateColor(index)} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip content={renderTooltip} />
           {showLegend && (
             <Legend 
               wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}

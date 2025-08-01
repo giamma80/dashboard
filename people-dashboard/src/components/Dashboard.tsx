@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, Upload, Download, Calendar, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X, ChevronDown } from 'lucide-react';
+import { Users, Upload, Calendar, TrendingUp, BarChart3, PieChart as PieChartIcon, Gauge, Filter, X, ChevronDown } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, XAxis, YAxis, CartesianGrid, BarChart, Bar, ComposedChart, Line } from 'recharts';
-import DownloadSection from './DownloadSection';
 import { ToastContainer, useToast } from './Toast';
 import FileUploader from './FileUploader';
 import type { FileUploadResult, FileUploadError } from './FileUploader';
@@ -315,14 +314,14 @@ const Dashboard = () => {
   const [membersSortColumn, setMembersSortColumn] = useState<string>('');
   const [membersSortDirection, setMembersSortDirection] = useState<'asc' | 'desc'>('asc');
   
-  // State per il modale download
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-  
   // State per l'accordion del Gantt
   const [isGanttExpanded, setIsGanttExpanded] = useState(false);
   
   // State per il filtro quarter
   const [selectedQuarter, setSelectedQuarter] = useState<string>('');
+  
+  // State per la modale di upload
+  const [showUploadModal, setShowUploadModal] = useState(false);
   
   // State per dropdown aperti
   const [isTeamMembersDropdownOpen, setIsTeamMembersDropdownOpen] = useState(false);
@@ -1302,6 +1301,9 @@ const Dashboard = () => {
         duration: 4000
       });
       
+      // Chiudi la modale
+      setShowUploadModal(false);
+      
       // Se ci sono errori nel parsing, mostra anche un toast di warning
       if (processResult.errors.length > 0) {
         const maxErrorsToShow = 5;
@@ -1883,7 +1885,7 @@ const Dashboard = () => {
             </div>
 
             {/* Dropdown Membri */}
-            <div className="min-w-60">
+            <div className="min-w-52">
               {allMembers.length > 0 ? (
                 <>
                   <MultiSelectDropdown
@@ -1904,7 +1906,7 @@ const Dashboard = () => {
             </div>
 
             {/* Dropdown Stream */}
-            <div className="min-w-60">
+            <div className="min-w-52">
               {allStreams.length > 0 ? (
                 <>
                   <MultiSelectDropdown
@@ -1925,7 +1927,7 @@ const Dashboard = () => {
             </div>
 
             {/* Dropdown Status */}
-            <div className="min-w-60">
+            <div className="min-w-52">
               {allStatus.length > 0 ? (
                 <>
                   <MultiSelectDropdown
@@ -1946,7 +1948,7 @@ const Dashboard = () => {
             </div>
 
             {/* Dropdown Type */}
-            <div className="min-w-60">
+            <div className="min-w-52">
               {allTypes.length > 0 ? (
                 <>
                   <MultiSelectDropdown
@@ -2438,7 +2440,21 @@ const Dashboard = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-between mb-4">
-            <div></div>
+            {/* Icona Upload a sinistra */}
+            <div className="flex items-center">
+              {hasLoadedCsv && (
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg transition-colors shadow-md group"
+                  title="Carica nuovi dati"
+                >
+                  <Upload className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Carica dati</span>
+                </button>
+              )}
+            </div>
+            
+            {/* Titolo al centro */}
             <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
               <div className="flex items-center gap-1">
                 <div className="w-4 h-4 bg-blue-500 rounded"></div>
@@ -2447,15 +2463,9 @@ const Dashboard = () => {
               </div>
               Team Dashboard
             </h1>
-            <div>
-              <button
-                onClick={() => setShowDownloadModal(true)}
-                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md"
-              >
-                <Download className="w-4 h-4" />
-                Scarica App
-              </button>
-            </div>
+            
+            {/* Spazio vuoto a destra per bilanciare */}
+            <div className="w-32"></div>
           </div>
           <p className="text-gray-600 text-sm mb-4">Dashboard di gestione progetti e allocazione risorse del team</p>
           {lastUpdate && (
@@ -2467,18 +2477,22 @@ const Dashboard = () => {
 
         {!hasLoadedCsv ? (
           // Stato vuoto - FileUploader con supporto Excel
-          <FileUploader
-            supportedTypes={['csv', 'xlsx', 'xls']}
-            maxSizeMB={10}
-            onFileLoad={handleNewFileLoad}
-            onError={handleNewFileError}
-            onLoadStart={handleNewFileLoadStart}
-            isLoading={isLoading}
-            enableDragDrop={true}
-            title="Carica dati del team"
-            description="Carica un file CSV o Excel con i dati dei progetti per visualizzare la dashboard"
-            buttonText="Seleziona file"
-          />
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <FileUploader
+                supportedTypes={['csv', 'xlsx', 'xls']}
+                maxSizeMB={10}
+                onFileLoad={handleNewFileLoad}
+                onError={handleNewFileError}
+                onLoadStart={handleNewFileLoadStart}
+                isLoading={isLoading}
+                enableDragDrop={true}
+                title="Carica dati del team"
+                description="Carica un file CSV o Excel con i dati dei progetti per visualizzare la dashboard"
+                buttonText="Seleziona file"
+              />
+            </div>
+          </div>
         ) : !dashboardData ? (
           // Stato di caricamento quando CSV è presente ma dashboardData non ancora caricato
           <div className="flex items-center justify-center py-12">
@@ -2907,8 +2921,23 @@ const Dashboard = () => {
             {/* Team Members Section - sotto tutto */}
             <TeamMembersSection />
 
-            {/* Upload new data button */}
-            <div className="text-center">
+          </div>
+        )}
+
+        {/* Modale Upload */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Carica nuovi dati</h2>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
               <FileUploader
                 supportedTypes={['csv', 'xlsx', 'xls']}
                 maxSizeMB={10}
@@ -2916,22 +2945,16 @@ const Dashboard = () => {
                 onError={handleNewFileError}
                 onLoadStart={handleNewFileLoadStart}
                 isLoading={isLoading}
-                enableDragDrop={false}
-                title=""
-                description=""
-                buttonText="Carica nuovi dati"
-                className="py-4"
+                enableDragDrop={true}
+                title="Seleziona un file o trascinalo qui"
+                description="Supporta CSV, Excel (.xlsx, .xls) fino a 10MB"
+                buttonText="Seleziona file"
+                className=""
               />
             </div>
           </div>
         )}
 
-        {/* Download Modal */}
-        <DownloadSection 
-          isOpen={showDownloadModal} 
-          onClose={() => setShowDownloadModal(false)} 
-        />
-        
         {/* Toast Container */}
         <ToastContainer toasts={toasts} onClose={closeToast} />
       </div>
